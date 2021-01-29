@@ -76,10 +76,6 @@ namespace bamr {
     PyObject *predict_method;
     PyObject *train_args;
     PyObject *emu_n_sources;
-    PyObject *train_res;
-    PyObject *train_pTemp;
-    PyObject *train_temp;
-    PyObject *test_show;
     PyObject *test_vals;
     PyObject *target_cols;
     PyObject *target_pred;
@@ -88,12 +84,8 @@ namespace bamr {
      */
     bool dv_index2;
 
-    /** \brief Train file name for python emulator
+    /** \brief Desc
      */
-    //std::string emu_train;    
-
-    bool py_train;
-
     void setup_filters();
     
     // -------------------------------------------------------
@@ -149,7 +141,7 @@ namespace bamr {
     /// Model type string
     std::string model_type;
 
-    /** \brief Desc
+    /** \brief Information for python parameters
      */
     class py_param_info {
       

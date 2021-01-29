@@ -716,6 +716,30 @@ int mcmc_bamr::mcmc_func(std::vector<std::string> &sv, bool itive_com) {
     
   }
 
+  if (set->apply_emu) {
+    
+    // Ugly hack to increase the size of the 'low' and 'high' vectors
+    ubvector low2(low.size()+nsd->n_sources);
+    ubvector high2(low.size()+nsd->n_sources);
+    vector_copy(low.size(),low,low2);
+    vector_copy(high.size(),high,high2);
+    
+    for(size_t i=0;i<nsd->n_sources;i++) {
+      names.push_back(((string)"atm_")+nsd->source_names[i]);
+      units.push_back("");
+      low2[i+low.size()]=0.0;
+      high2[i+high.size()]=1.0;
+    }
+    
+    // Ugly hack, part 2
+    low.resize(low2.size());
+    high.resize(high2.size());
+    vector_copy(low.size(),low2,low);
+    vector_copy(high.size(),high2,high);
+    
+  }
+  
+  
   set_names_units(names,units);
   
   // Set initial points if they have not already been set by the

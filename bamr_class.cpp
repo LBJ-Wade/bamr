@@ -278,11 +278,12 @@ int bamr_class::compute_point(const ubvector &pars, std::ofstream &scr_out,
 
     double e_max=preds[3];
 
-    // Check speed of sound causal limit
-    for (size_t i=0; i<100; i++) {
+    // Check speed of sound for energy densities less than the
+    // central energy density of the maximum mass star
+    for (int i=0;i<set->grid_size;i++) {
       double e_i=mod->e_grid[i];
       if (e_i<e_max) {
-        if (preds[preds.size()-(i+1)] > 1.0) {
+        if (preds[i+4]>1.0) {
           iret=2;
         }
       }
@@ -1595,15 +1596,6 @@ int init(void *bcp2, void *mdp2, void *nsd2, void *setp2,
   bcp->n_threads=1;
 
   // ----------------------------------------------------------------
-  
-  if (setp->apply_emu) {
-    for(size_t i=0;i<nsd->n_sources;i++) {
-      bcp->ppi.names.push_back(((string)"atm_")+nsd->source_names[i]);
-      bcp->ppi.units.push_back("");
-      bcp->ppi.low.push_back(0.0);
-      bcp->ppi.high.push_back(1.0);
-    }
-  }
   
   // ----------------------------------------------------------------
   // If necessary, set up the intrinsic scattering parameters FFT
