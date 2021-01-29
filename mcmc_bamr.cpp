@@ -44,68 +44,61 @@ mcmc_bamr::mcmc_bamr() {
   bc_arr[0]->nsd=nsd;
 }
 
-int mcmc_bamr::train(std::string file_name, std::vector<std::string> &names) {
+int mcmc_bamr::train_emulator(std::string train_filename,
+                              std::vector<std::string> &param_names) {
   
   Py_Initialize();
   PyRun_SimpleString("import sys");
   PyRun_SimpleString("sys.path.append('./')");
 
-  // Todo: check to see if threading really works
-  PyEval_InitThreads();
-  Py_DECREF(PyImport_ImportModule("threading"));
-
-  // train and test file names
-  string train_file = file_name;
-  string test_file = "test_data";
+  // AWS: This next function is deprecated, so I'm not sure what
+  // to do here
+  //PyEval_InitThreads();
+  //Py_DECREF(PyImport_ImportModule("threading"));
 
   // Import python module
-  train_modFile = PyImport_ImportModule("emu");
-  if (train_modFile == 0) {
-    PyErr_Print();
-    std::exit(1);
+  emulator_module=PyImport_ImportModule("emulator");
+  if (emulator_module==0) {
+    O2SCL_ERR2("Failed to import module in ",
+              "mcmc_bamr::train_emulator().",o2scl::exc_einval);
   }
 
-  // Copy parameter names to python module. This does not
-  // currently include the alt_ parameters for the atmosphere
-  train_tParam_Names=PyList_New(names.size());
-  for(size_t i=0; i<names.size(); i++){
-    PyList_SetItem(train_tParam_Names, i, 
-		   PyUnicode_FromString(names[i].c_str()));
+  // Copy parameter names to a python object. 
+  train_param_names=PyList_New(param_names.size());
+  for(size_t i=0;i<param_names.size();i++) {
+    PyList_SetItem(train_param_names,i, 
+		   PyUnicode_FromString(param_names[i].c_str()));
   }
 
   // Python class object
-  train_trainClass = PyObject_GetAttrString(train_modFile, "modGpr");
-  assert(train_trainClass != 0);
-
-  // Create an instance of the modGpr class
-  if(PyCallable_Check(train_trainClass)) {
-    train_instance = PyObject_CallObject(train_trainClass, 0);
+  emulator_class = PyObject_GetAttrString(emulator_module,"gp_emulator");
+  if (emulator_class==0) {
+    O2SCL_ERR2("Failed to import class in ",
+              "mcmc_bamr::train_emulator().",o2scl::exc_einval);
   }
-  assert(train_instance != 0);
 
-  if(nsd->n_sources == 0 && !set->apply_intsc){
-    addtl_sources = PyLong_FromSize_t(0);
+  // Create an instance of the gp_emulator class
+  if(PyCallable_Check(emulator_class)) {
+    emulator_instance=PyObject_CallObject(emulator_class,0);
   }
-  if(nsd->n_sources>0 && !set->apply_intsc){
-    addtl_sources = PyLong_FromSize_t(nsd->n_sources);
-  }
-  if(nsd->n_sources>0 && set->apply_intsc){
-    addtl_sources = PyLong_FromSize_t(nsd->n_sources);
-  } 
 
-  // Python arguments for the modGpr::modTrain() function
-  train_pArgs = PyTuple_Pack(4, 
-			     PyUnicode_FromString(train_file.c_str()),
-			     train_tParam_Names, train_tParam_Names,
-			     addtl_sources);
+  // Set the number of sources
+  emu_n_sources=PyLong_FromSize_t(nsd->n_sources);
 
-  train_trainMthd = PyObject_GetAttrString(train_instance, "modTrain");
+  // Python arguments for the gp_emulator::train() function
+  train_args=PyTuple_Pack(4,PyUnicode_FromString(train_filename.c_str()),
+                          train_param_names,train_param_names,
+                          emu_n_sources);
   
-  // Call Python training function
-  if (PyCallable_Check(train_trainMthd)) {
-    PyObject_CallObject(train_trainMthd, train_pArgs);
+  // Call python training function with previously created arguments
+  train_method=PyObject_GetAttrString(emulator_instance,"train");
+  if (PyCallable_Check(train_method)) {
+    PyObject_CallObject(train_method,train_args);
   }
 
+  // Get prediction function
+  predict_method=PyObject_GetAttrString(emulator_instance,"predict");
+  
   return 0;
 }
 
@@ -784,13 +777,13 @@ int mcmc_bamr::mcmc_func(std::vector<std::string> &sv, bool itive_com) {
   }
   
   if (set->apply_emu) {
-    cout << "Applying train function." << endl;
+    cout << "Training emulator." << endl;
 
-    // train the module
-    int pinfo = train(set->emu_train, names);
-    if(pinfo != 0){
-      cout << "Training Failed. " << endl;
-      exit(-1);
+    // Train the emulator
+    int pinfo=train_emulator(set->emu_train,names);
+    if (pinfo!=0) {
+      O2SCL_ERR2("Training emulator failed in ",
+                "mcmc_bamr::mcmc_func().",o2scl::exc_efailed);
     }
 
     // Copy trained method to bint classes
@@ -798,19 +791,19 @@ int mcmc_bamr::mcmc_func(std::vector<std::string> &sv, bool itive_com) {
       bamr_class &bc=dynamic_cast<bamr_class &>(*(bc_arr[i]));
 
       // copy pyobject to bint class
-      //bc.emu_train=emu_train;
-      bc.train_modFile=train_modFile;
-      bc.train_trainClass=train_trainClass;
-      bc.train_instance=train_instance;
-      bc.train_trainMthd=train_trainMthd;
-      bc.train_tParam_Names=train_tParam_Names;
-      bc.addtl_sources=addtl_sources;
+      bc.emulator_module=emulator_module;
+      bc.emulator_class=emulator_class;
+      bc.emulator_instance=emulator_instance;
+      bc.train_method=train_method;
+      bc.predict_method=predict_method;
+      bc.train_param_names=train_param_names;
+      bc.emu_n_sources=emu_n_sources;
     }
 
     // Delete unnecessary PyObjects
-    Py_DECREF(train_modFile);
-    Py_DECREF(train_instance);
-    Py_DECREF(train_trainClass);
+    Py_DECREF(emulator_module);
+    Py_DECREF(emulator_instance);
+    Py_DECREF(emulator_class);
   }
 
   // Perform the MCMC simulation

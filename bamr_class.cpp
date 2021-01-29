@@ -93,8 +93,8 @@ void bamr_class::setup_filters() {
 int bamr_class::fill(const ubvector &pars, double weight, 
 		     std::vector<double> &line, model_data &dat) {
 
-  if (set->apply_emu) return 0;
-  else{
+  if (set->apply_emu==false) {
+    
     for(size_t i=0;i<nsd->n_sources;i++) {
       line.push_back(dat.sourcet.get("wgt",i));
     }
@@ -226,81 +226,34 @@ int bamr_class::fill(const ubvector &pars, double weight,
         line.push_back(dat.eos.get_constant("delta_m"));
       }
     }
-    return o2scl::success;
   }  
 
+  return o2scl::success;
 }
 
 int bamr_class::compute_point(const ubvector &pars, std::ofstream &scr_out, 
 			      double &log_wgt, model_data &dat) {
 
-  int iret;
+  int iret=0;
 
   if (set->apply_emu) {
 
-    // create vector for emulator prediction
-    ubvector test_pars;
-    
-    // copy mcmc param values
-    test_pars = pars;
-    
-    // update emulator parameter vector with H or He alt values
-    if(nsd->n_sources>0) {
-      
-      test_pars.resize(pars.size()+nsd->n_sources);
-      
-      for(size_t i=0; i<pars.size(); i++){
-        test_pars[i] = pars[i];
-      }
-      /* 
-         MCMC paprmeter vector contains moddel params and $mf_$'s
-         from the sources. We calculate "alt" values from the $mf_$'s
-         and pass the additional alt values to the "emy.py". "emu.py"
-         was trained with "alt" columns with the mcmc_params. To 
-         emulate a point we need to update the "alt" values.
-      */      
-      for(size_t i=(pars.size()-nsd->n_sources); i<pars.size(); i++){
-        double alt=pars[i]*1.0e8-((double)((int)(pars[i]*1.0e8)));
-        if(alt<2/3){
-          test_pars[pars.size()] = 0;
-        } else {
-          test_pars[pars.size()] = 1;
-        }
-      }
-    }
-
     // Create new pylist from param_vals
-    test_vals = PyList_New(test_pars.size());
-    for(size_t i=0; i<test_pars.size(); i++){
-      PyList_SetItem(test_vals, i, PyFloat_FromDouble(test_pars[i]));
+    test_vals = PyList_New(pars.size());
+    for(size_t i=0;i<pars.size();i++) {
+      PyList_SetItem(test_vals,i,PyFloat_FromDouble(pars[i]));
     }
-
-    /* 
-       As a test, call emu.py:modGpr:show().
-    */
-
-    if (PyCallable_Check(train_trainMthd)) {
+    
+    if (PyCallable_Check(predict_method)) {
       target_pred=PyObject_CallObject
-        (train_trainMthd, 
+        (predict_method, 
          PyTuple_Pack(4,PyUnicode_FromString(set->emu_train.c_str()),
-                      train_tParam_Names,test_vals,addtl_sources));
+                      train_param_names,test_vals,emu_n_sources));
     }
 
     // Finally, set the value of log_wgt equal to the value returned
     // by the python emulator
     
-    // Check current MPI rank
-    int mpi_rank = 0;
-#ifdef BAMR_MPI
-    MPI_Comm_rank(MPI_COMM_WORLD,&mpi_rank);
-#endif
-    
-    // Check current OpenMP thread
-    int pthread=0;
-#ifdef O2SCL_OPENMP      
-    pthread=omp_get_thread_num();
-#endif
-
     // Prediction vector copied from the python list stored in
     // target_pred
     ubvector preds;
@@ -311,36 +264,32 @@ int bamr_class::compute_point(const ubvector &pars, std::ofstream &scr_out,
       preds[i] = PyFloat_AsDouble(pTarget);
     }
     
-    log_wgt = preds[0];
+    log_wgt=preds[0];
     /*
       cout << "Emulated log_wgt by rank "<< mpi_rank
       <<" and thread "<< pthread <<
       " : " << log_wgt << endl;
     */
 
-    double pred_Mmax = preds[2];
-    if (pred_Mmax < 2.0) {
+    double M_max=preds[2];
+    if (M_max<set->min_max_mass) {
       iret=1;
     }
 
-    double pred_e_max=preds[3];
+    double e_max=preds[3];
 
     // Check speed of sound causal limit
     for (size_t i=0; i<100; i++) {
       double e_i=mod->e_grid[i];
-      if (e_i<pred_e_max) {
+      if (e_i<e_max) {
         if (preds[preds.size()-(i+1)] > 1.0) {
-          iret=1;
+          iret=2;
         }
       }
     }
 
-    iret = 0;
-    
   } else {
 
-    cout << "Here2." << endl;
-    
     // Compute the M vs R curve and return a non-zero value if it failed
     mod->compute_star(pars,scr_out,iret,dat);
     if (iret!=0) {
@@ -1645,6 +1594,17 @@ int init(void *bcp2, void *mdp2, void *nsd2, void *setp2,
   
   bcp->n_threads=1;
 
+  // ----------------------------------------------------------------
+  
+  if (setp->apply_emu) {
+    for(size_t i=0;i<nsd->n_sources;i++) {
+      bcp->ppi.names.push_back(((string)"atm_")+nsd->source_names[i]);
+      bcp->ppi.units.push_back("");
+      bcp->ppi.low.push_back(0.0);
+      bcp->ppi.high.push_back(1.0);
+    }
+  }
+  
   // ----------------------------------------------------------------
   // If necessary, set up the intrinsic scattering parameters FFT
   // filters and/or read the FFT cache

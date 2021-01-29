@@ -68,13 +68,14 @@ namespace bamr {
     
   public:
 
-    PyObject *train_modFile;
-    PyObject *train_tParam_Names;
-    PyObject *train_trainClass;
-    PyObject *train_instance;
-    PyObject *train_trainMthd;
-    PyObject *train_pArgs;
-    PyObject *addtl_sources;
+    PyObject *emulator_module;
+    PyObject *train_param_names;
+    PyObject *emulator_class;
+    PyObject *emulator_instance;
+    PyObject *train_method;
+    PyObject *predict_method;
+    PyObject *train_args;
+    PyObject *emu_n_sources;
     PyObject *train_res;
     PyObject *train_pTemp;
     PyObject *train_temp;
@@ -82,10 +83,6 @@ namespace bamr {
     PyObject *test_vals;
     PyObject *target_cols;
     PyObject *target_pred;
-
-    /** \brief If true, include emulator from sklearn
-     */
-    //bool apply_emu;
 
     /** \brief If true, use index2 to take derivative of M_max
      */

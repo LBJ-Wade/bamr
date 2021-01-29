@@ -590,13 +590,7 @@ void model::compute_star(const ubvector &pars, std::ofstream &scr_out,
     
     // Compute the masses and radii for each source
     for(size_t i=0;i<nsd->n_sources;i++) {
-      if (set->mass_switch==0) {
-	dat.sourcet.set("M",i,m_max*pars[this->n_eos_params+i]);
-      } else if (set->mass_switch==1) {
-	dat.sourcet.set("M",i,0.4*pars[this->n_eos_params+i]+1.3);
-      } else {
-	dat.sourcet.set("M",i,0.2*pars[this->n_eos_params+i]+1.3);
-      }
+      dat.sourcet.set("M",i,m_max*pars[this->n_eos_params+i]);
       dat.sourcet.set("R",i,
 		      dat.mvsr.interp("gm",dat.sourcet.get("M",i),"r"));
     }

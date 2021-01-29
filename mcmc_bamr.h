@@ -119,19 +119,20 @@ namespace bamr {
      */
     std::string emu_train;
 
-    PyObject *train_modFile;
-    PyObject *train_tParam_Names;
-    PyObject *train_trainClass;
-    PyObject *train_instance;
-    PyObject *train_trainMthd;
-    PyObject *train_pArgs;
+    PyObject *emulator_module;
+    PyObject *train_param_names;
+    PyObject *emulator_class;
+    PyObject *emulator_instance;
+    PyObject *train_method;
+    PyObject *predict_method;
+    PyObject *train_args;
 
     /// The number of sources
-    PyObject *addtl_sources;
+    PyObject *emu_n_sources;
     
-    PyObject *train_res;
-    PyObject *train_pTemp;
-    PyObject *train_temp;
+    //PyObject *train_res;
+    //PyObject *train_pTemp;
+    //PyObject *train_temp;
 
     bool py_train;
 
@@ -140,7 +141,8 @@ namespace bamr {
 
         This is called in mcmc_bamr::mcmc_func().
      */
-    int train(std::string file_name, std::vector<std::string> &names);
+    int train_emulator(std::string file_name,
+                       std::vector<std::string> &names);
     
     /// A string indicating which model is used, set in \ref set_model().
     std::string model_type;

@@ -71,13 +71,12 @@ namespace bamr {
       in_r_min=5.0;
       in_r_max=18.0;
       addl_quants=false;
-      mass_switch=0;
       compute_cthick=false;
       crust_from_L=false;
       mpi_load_debug=false;
       data_dir="data";
       apply_emu=false;
-      //emu_train="";
+      emu_train="";
     }
     
     /// \name Parameter objects for the 'set' command
@@ -87,7 +86,6 @@ namespace bamr {
     o2scl::cli::parameter_double p_input_dist_thresh;
     o2scl::cli::parameter_double p_min_mass;
     o2scl::cli::parameter_int p_grid_size;
-    o2scl::cli::parameter_int p_mass_switch;
     o2scl::cli::parameter_int p_verbose;
     o2scl::cli::parameter_bool p_debug_star;
     o2scl::cli::parameter_bool p_debug_load;
@@ -191,10 +189,13 @@ namespace bamr {
 	as well as the gravitational mass (default false)
     */
     bool inc_baryon_mass;
+    
     /// If true, compute crust thicknesses (default false)
     bool compute_cthick;
+    
     /// If true (default false)
     bool addl_quants;
+    
     /** \brief If true, compute a crust consistent with current 
 	value of L
 
@@ -203,16 +204,17 @@ namespace bamr {
 	provides S and L.
     */
     bool crust_from_L;
-    int mass_switch;
 
-    /** \brief If true, include emulator from sklearn
+    /** \brief If true, include emulator
      */
     bool apply_emu;
 
-    /** \brief Desc
+    /** \brief Filename for training data set for emulator
      */
     std::string emu_train;
-    
+
+    /** \brief If true, couple MCMC threads
+     */
     bool couple_threads;
     //@}
 
@@ -243,11 +245,11 @@ namespace bamr {
      */
     bool apply_intsc;
 
-    /** \brief Desc
+    /** \brief If true, cache the intrinsic scattering correction
      */
     bool cached_intsc;
 
-    /** \brief Desc
+    /** \brief Directory from which neutron star data is to be obtained
      */
     std::string data_dir;
     
@@ -389,10 +391,6 @@ namespace bamr {
       p_mpi_load_debug.b=&mpi_load_debug;
       p_mpi_load_debug.help="";
       cl.par_list.insert(std::make_pair("mpi_load_debug",&p_mpi_load_debug));
-
-      p_mass_switch.i=&mass_switch;
-      p_mass_switch.help="";
-      cl.par_list.insert(std::make_pair("mass_switch",&p_mass_switch));
 
       p_verbose.i=&verbose;
       p_verbose.help=((std::string)"This controls verbose output ")+
