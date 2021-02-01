@@ -245,10 +245,15 @@ int bamr_class::compute_point(const ubvector &pars, std::ofstream &scr_out,
     }
     
     if (PyCallable_Check(predict_method)) {
+      cout << "Calling predictor." << endl;
       target_pred=PyObject_CallObject
         (predict_method, 
          PyTuple_Pack(4,PyUnicode_FromString(set->emu_train.c_str()),
                       train_param_names,test_vals,emu_n_sources));
+      if (target_pred==0) {
+        O2SCL_ERR("Predictor failed.",o2scl::exc_einval);
+      }
+      cout << "Done calling predictor." << endl;
     }
 
     // Finally, set the value of log_wgt equal to the value returned

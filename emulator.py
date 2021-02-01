@@ -1,10 +1,5 @@
 #!/usr/bin/python3
-import math
 import h5py
-import os
-import re
-import sys
-import getopt
 import numpy as np
 from sklearn.gaussian_process import GaussianProcessRegressor as GPR
 from sklearn.gaussian_process.kernels import RBF
@@ -93,14 +88,14 @@ class gp_emulator:
         # Addtinal source check
         self.sources = n_sources
 
-        if(self.sources > 0):
-            print("Pymodule : adding atmosphere columns")
-            for i in range(0, self.sources):
-                temp_atm = "alt_"+str(i)
-                self.params.append(temp_atm)
+        #if(self.sources > 0):
+        #    print("emulator.py: Adding atmosphere columns.")
+        #    for i in range(0, self.sources):
+        #        temp_atm = "alt_"+str(i)
+        #        self.params.append(temp_atm)
 
-        print("PyModule : Parameter names :", self.params)
-        print("PyModule : Parameter names :", self.target_cols)
+        print("emulator.py, parameters:",self.params)
+        print("emulator.py, targets:",self.target_cols)
 
         # Read train file
         train_file = h5py.File(hdf_file, 'r')
@@ -108,7 +103,7 @@ class gp_emulator:
         # Read the training columns
         X_train = np.array([[]])
         for i in range(0, len(self.params)):
-            if(i == 0):
+            if (i == 0):
                 temp = np.array(
                     train_file.file["markov_chain_0/data/"+
                                     self.params[i]])
@@ -122,7 +117,7 @@ class gp_emulator:
         # Read the target columns
         Y_train = np.array([[]])
         for i in range(0, len(self.target_cols)):
-            if(i == 0):
+            if (i == 0):
                 temp = np.array(
                     train_file.file["markov_chain_0/data/"+
                                     self.target_cols[i]])
@@ -152,14 +147,13 @@ class gp_emulator:
             Y_train[i] = temp
         Y_train = Y_train.transpose()
 
-        print("PyModule : Training array : ", X_train.shape)
-        print("PyModule : Target array : ", Y_train.shape)
-
-        print("PyModule : Training GPR model.")
-        kernel = 1.0 * RBF(1)
-        self.gpr = GPR(kernel=kernel, random_state=0).fit(X_train, Y_train)
-
-        print("PyModule : Training done : ", self.gpr)
+        print("emulator.py, training array:",X_train.shape)
+        print("emulator.py, target array:",Y_train.shape)
+        
+        print("emulator.py: Training GPR model.")
+        kernel=1.0*RBF(1)
+        self.gpr=GPR(kernel=kernel, random_state=0).fit(X_train,Y_train)
+        print("emulator.py: Training done,", self.gpr)
 
         # delete training arrays
         del X_train
@@ -168,11 +162,23 @@ class gp_emulator:
         return 0
 
     def predict(self, hdf_file, param_name, param_vals, n_sources):
+        """
+        If trained model is available, predictions from given
+        parameter values.
+        """
 
-        # If trained model is available, predictions from given
-        # parameter values
-            
-        #print("PyModule : GPR model already exist.")
+        print('jere')
+        # Update class parameter names
+        self.params = param_name
+
+        # Update Parameter values 
+        self.init_vals = param_vals
+
+        # Addtinal source check
+        self.sources = n_sources
+
+        print('jere2')
+        #print("emulator.py : GPR model already exist.")
         # normalize initial parameter values
             
         norm_init_vals = np.array([])
@@ -190,8 +196,9 @@ class gp_emulator:
                                        (self.init_vals[i]-temp_mean)/
                                        temp_std)
 
+        print('jere3')
         norm_init_vals = norm_init_vals.reshape(1, len(self.params))
-        #print("PyModule : normalized parameter values: ", norm_init_vals)
+        #print("emulator.py : normalized parameter values: ", norm_init_vals)
 
         # prediction from given parameter values
         predicted = self.gpr.predict(norm_init_vals, return_std=False)
@@ -205,9 +212,11 @@ class gp_emulator:
                 
             #print("Pymodule : predicted M_max :", re_predicted[2])
                 
+        print('jere4')
         predicted_log_wgt = (predicted[0][0] *
                              self.target_std_train['log_wgt'] +
                              self.target_mean_train['log_wgt'])
         #print(predicted)
+        print('jere5')
 
         return re_predicted

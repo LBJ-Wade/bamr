@@ -91,12 +91,17 @@ int mcmc_bamr::train_emulator(std::string train_filename,
                           emu_n_sources);
   
   // Call python training function with previously created arguments
+  cout << "Calling train method." << endl;
   train_method=PyObject_GetAttrString(emulator_instance,"train");
   if (PyCallable_Check(train_method)) {
-    PyObject_CallObject(train_method,train_args);
+    PyObject *train_res=PyObject_CallObject(train_method,train_args);
+    if (train_res==0) {
+      O2SCL_ERR("Training method failed.",o2scl::exc_einval);
+    }
   }
+  cout << "Done with train method." << endl;
 
-  // Get prediction function
+  // Get prediction function for later use
   predict_method=PyObject_GetAttrString(emulator_instance,"predict");
   
   return 0;
@@ -725,7 +730,7 @@ int mcmc_bamr::mcmc_func(std::vector<std::string> &sv, bool itive_com) {
     vector_copy(high.size(),high,high2);
     
     for(size_t i=0;i<nsd->n_sources;i++) {
-      names.push_back(((string)"atm_")+nsd->source_names[i]);
+      names.push_back(((string)"alt_")+o2scl::szttos(i));
       units.push_back("");
       low2[i+low.size()]=0.0;
       high2[i+high.size()]=1.0;
@@ -802,7 +807,7 @@ int mcmc_bamr::mcmc_func(std::vector<std::string> &sv, bool itive_com) {
   
   if (set->apply_emu) {
     cout << "Training emulator." << endl;
-
+    
     // Train the emulator
     int pinfo=train_emulator(set->emu_train,names);
     if (pinfo!=0) {
