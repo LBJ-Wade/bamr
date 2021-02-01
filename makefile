@@ -558,7 +558,7 @@ compare:
 		-mcmc 
 
 make_train:
-	./bamr_nompi -threads 1 -set aff_inv 0 -set couple_threads 0 \
+	./bamr_nompi -threads 1 -set aff_inv 1 -set couple_threads 0 \
 		-set prefix make_train -set max_time 86400 \
 		-set n_walk 120 -set step_fac 2.0 \
 		-set norm_max 0 -set addl_quants 1 -set inc_baryon_mass 1 \

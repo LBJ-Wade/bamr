@@ -2706,7 +2706,7 @@ void tews_threep_ligo::get_param_info(std::vector<std::string> &names,
 				      ubvector &low, ubvector &high) {
 
   names={"a","alpha","param_S","param_L","index1","trans1",
-	 "index2","trans2","index3","M_chirp_det","eta","z_cdf"};
+	 "index2","trans2","index3","M_chirp_det","q","z_cdf"};
 
   units={"MeV","","MeV","MeV","","1/fm^4","","1/fm^4","","Msun","",""};
   
@@ -2726,7 +2726,7 @@ void tews_threep_ligo::get_param_info(std::vector<std::string> &names,
   low[8]=-1.0;
 
   low[9]=1.1971;
-  low[10]=0.2;
+  low[10]=0.0;
   low[11]=0.0;
     
   high.resize(n_eos_params+nsd->n_sources);
@@ -2741,7 +2741,7 @@ void tews_threep_ligo::get_param_info(std::vector<std::string> &names,
   high[7]=8.0;
   high[8]=8.0;
   high[9]=1.1979;
-  high[10]=0.25;
+  high[10]=1.0;
   high[11]=1.0;
     
   // Go to the parent which takes care of the data-related
@@ -3091,7 +3091,7 @@ void tews_fixp_ligo::get_param_info(std::vector<std::string> &names,
 				      ubvector &low, ubvector &high) {
 
   names={"a","alpha","param_S","param_L","pres1","pres2",
-	 "pres3","pres4","M_chirp_det","eta","z_cdf"};
+	 "pres3","pres4","M_chirp_det","q","z_cdf"};
 
   units={"MeV","","MeV","MeV","1/fm^4","1/fm^4","1/fm^4","1/fm^4",
 	 "Msun","",""};
@@ -3111,7 +3111,7 @@ void tews_fixp_ligo::get_param_info(std::vector<std::string> &names,
   low[7]=0.0;
     
   low[8]=1.1971;
-  low[9]=0.2;
+  low[9]=0.0;
   low[10]=0.0;
 
   high.resize(n_eos_params+nsd->n_sources);
@@ -3130,7 +3130,7 @@ void tews_fixp_ligo::get_param_info(std::vector<std::string> &names,
   high[7]=2.5;
 
   high[8]=1.1979;
-  high[9]=0.25;
+  high[9]=1.0;
   high[10]=1.0;    
   // Go to the parent which takes care of the data-related
   // parameters
