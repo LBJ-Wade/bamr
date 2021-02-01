@@ -346,10 +346,10 @@ int bamr_class::compute_point(const ubvector &pars, std::ofstream &scr_out,
     // Determine the alt parameter
 	  
     for (size_t i=0;i<nsd->n_sources;i++) {
-	    
-      // Determine H or He from mass parameter
-      double mass=dat.sourcet.get("M",i);
-      double d_alt=mass*1.0e8-((double)((int)(mass*1.0e8)));
+
+      // Determine H or He from mf parameter
+      double mf=pars[i+mod->n_eos_params];
+      double d_alt=mf*1.0e8-((double)((int)(mf*1.0e8)));
       if (d_alt<2.0/3.0) {
         dat.sourcet.set("alt",i,0.0);
       } else {

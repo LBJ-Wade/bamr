@@ -88,7 +88,7 @@ void model::compute_star(const ubvector &pars, std::ofstream &scr_out,
 			 int &ret, model_data &dat) {
 
   ret=ix_success;
-  bool new_derivative=true;
+  bool new_derivative=false;
 
   if (has_eos) {
     
@@ -112,7 +112,7 @@ void model::compute_star(const ubvector &pars, std::ofstream &scr_out,
       dat.mvsr=*(ts.get_results());
       double m_max=dat.mvsr.max("gm");
       
-      cout << "Here1" << endl;
+      cout << "Here1x" << endl;
       
       if (m_max<set->min_max_mass) {
 	scr_out << "Maximum mass too small: " << m_max << " < "

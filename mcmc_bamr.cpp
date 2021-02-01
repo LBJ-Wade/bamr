@@ -369,7 +369,7 @@ int mcmc_bamr::mcmc_init() {
 
   if (nsd->source_fnames_alt.size()>0) {
     for(size_t i=0;i<nsd->n_sources;i++) {
-      this->table->new_column(((std::string)"alt_")+o2scl::szttos(i));
+      this->table->new_column(((std::string)"atm_")+o2scl::szttos(i));
     }
   }
 
@@ -730,7 +730,7 @@ int mcmc_bamr::mcmc_func(std::vector<std::string> &sv, bool itive_com) {
     vector_copy(high.size(),high,high2);
     
     for(size_t i=0;i<nsd->n_sources;i++) {
-      names.push_back(((string)"alt_")+o2scl::szttos(i));
+      names.push_back(((string)"atm_")+o2scl::szttos(i));
       units.push_back("");
       low2[i+low.size()]=0.0;
       high2[i+high.size()]=1.0;
