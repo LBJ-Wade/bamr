@@ -60,7 +60,7 @@ int mcmc_bamr::train_emulator(std::string train_filename,
   emulator_module=PyImport_ImportModule("emulator");
   if (emulator_module==0) {
     O2SCL_ERR2("Failed to import module in ",
-              "mcmc_bamr::train_emulator().",o2scl::exc_einval);
+               "mcmc_bamr::train_emulator().",o2scl::exc_einval);
   }
 
   // Copy parameter names to a python object. 
@@ -74,7 +74,7 @@ int mcmc_bamr::train_emulator(std::string train_filename,
   emulator_class = PyObject_GetAttrString(emulator_module,"gp_emulator");
   if (emulator_class==0) {
     O2SCL_ERR2("Failed to import class in ",
-              "mcmc_bamr::train_emulator().",o2scl::exc_einval);
+               "mcmc_bamr::train_emulator().",o2scl::exc_einval);
   }
 
   // Create an instance of the gp_emulator class
@@ -234,193 +234,182 @@ int mcmc_bamr::mcmc_init() {
 
   if(set->apply_emu == false){
 
-         // -----------------------------------------------------------
-  // Add columns to table
+    // -----------------------------------------------------------
+    // Add columns to table
 
-  for(size_t i=0;i<nsd->n_sources;i++) {
-    this->table->new_column(((std::string)"wgt_")+nsd->source_names[i]);
-    if (!set->norm_max) {
-      this->table->set_unit(((std::string)"wgt_")+nsd->source_names[i],
-          "1/km/Msun");
+    for(size_t i=0;i<nsd->n_sources;i++) {
+      this->table->new_column(((std::string)"wgt_")+nsd->source_names[i]);
+      if (!set->norm_max) {
+        this->table->set_unit(((std::string)"wgt_")+nsd->source_names[i],
+                              "1/km/Msun");
+      }
     }
-  }
   
-  // It is important here that all of these columns which store values
-  // over a grid are either always positive or always negative,
-  // because the code reports zero in the fill_line() function for
-  // values beyond the end of the EOS or the M-R curve. 
-  for(size_t i=0;i<nsd->n_sources;i++) {
-    this->table->new_column(((std::string)"Rns_")+nsd->source_names[i]);
-    this->table->set_unit(((std::string)"Rns_")+nsd->source_names[i],
-        "km");
-  }
-  
-  for(size_t i=0;i<nsd->n_sources;i++) {
-    this->table->new_column(((std::string)"Mns_")+nsd->source_names[i]);
-    this->table->set_unit(((std::string)"Mns_")+nsd->source_names[i],
-        "Msun");
-  }
-  
-  if (m.has_eos) {
-    for(int i=0;i<set->grid_size;i++) {
-      this->table->new_column(((string)"P_")+o2scl::itos(i));
-      this->table->set_unit(((string)"P_")+o2scl::itos(i),
-          "1/fm^4");
+    // It is important here that all of these columns which store values
+    // over a grid are either always positive or always negative,
+    // because the code reports zero in the fill_line() function for
+    // values beyond the end of the EOS or the M-R curve. 
+    for(size_t i=0;i<nsd->n_sources;i++) {
+      this->table->new_column(((std::string)"Rns_")+nsd->source_names[i]);
+      this->table->set_unit(((std::string)"Rns_")+nsd->source_names[i],
+                            "km");
     }
-  }
   
-  for(int i=0;i<set->grid_size;i++) {
-    this->table->new_column(((string)"R_")+o2scl::itos(i));
-    this->table->set_unit(((string)"R_")+o2scl::itos(i),
-        "km");
+    for(size_t i=0;i<nsd->n_sources;i++) {
+      this->table->new_column(((std::string)"Mns_")+nsd->source_names[i]);
+      this->table->set_unit(((std::string)"Mns_")+nsd->source_names[i],
+                            "Msun");
+    }
+  
     if (m.has_eos) {
-      this->table->new_column(((string)"PM_")+o2scl::itos(i));
-      this->table->set_unit(((string)"PM_")+o2scl::itos(i),
-          "1/fm^4");
-    }
-  }
-  if (m.has_eos) {
-    if (set->baryon_density) {
       for(int i=0;i<set->grid_size;i++) {
-  this->table->new_column(((string)"Pnb_")+o2scl::itos(i));
-  this->table->set_unit(((string)"Pnb_")+o2scl::itos(i),
-            "1/fm^4");
-  this->table->new_column(((string)"EoA_")+o2scl::itos(i));
-  this->table->set_unit(((string)"EoA_")+o2scl::itos(i),
-            "MeV");
+        this->table->new_column(((string)"P_")+o2scl::itos(i));
+        this->table->set_unit(((string)"P_")+o2scl::itos(i),
+                              "1/fm^4");
       }
     }
-    if (m.has_esym) {
-      this->table->new_column("S");
-      this->table->set_unit("S","1/fm");
-      this->table->new_column("L");
-      this->table->set_unit("L","1/fm");
-    }
-    this->table->new_column("R_max");
-    this->table->set_unit("R_max","km");
-    this->table->new_column("M_max");
-    this->table->set_unit("M_max","Msun");
-    this->table->new_column("P_max");
-    this->table->set_unit("P_max","1/fm^4");
-    this->table->new_column("e_max");
-    this->table->set_unit("e_max","1/fm^4");
-    if (set->baryon_density) {
-      this->table->new_column("nb_max");
-      this->table->set_unit("nb_max","1/fm^3");
-    }
-    for(size_t i=0;i<nsd->n_sources;i++) {
-      this->table->new_column(((string)"ce_")+nsd->source_names[i]);
-      this->table->set_unit(((string)"ce_")+nsd->source_names[i],
-          "1/fm^4");
-    }
-    if (set->baryon_density) {
-      for(size_t i=0;i<nsd->n_sources;i++) {
-  this->table->new_column(((string)"cnb_")+nsd->source_names[i]);
-  this->table->set_unit(((string)"cnb_")+nsd->source_names[i],
-            "1/fm^3");
-      }
-      this->table->new_column("gm_nb1");
-      this->table->set_unit("gm_nb1","Msun");
-      this->table->new_column("r_nb1");
-      this->table->set_unit("r_nb1","km");
-      this->table->new_column("gm_nb2");
-      this->table->set_unit("gm_nb2","Msun");
-      this->table->new_column("r_nb2");
-      this->table->set_unit("r_nb2","km");
-      this->table->new_column("gm_nb3");
-      this->table->set_unit("gm_nb3","Msun");
-      this->table->new_column("r_nb3");
-      this->table->set_unit("r_nb3","km");
-      this->table->new_column("gm_nb4");
-      this->table->set_unit("gm_nb4","Msun");
-      this->table->new_column("r_nb4");
-      this->table->set_unit("r_nb4","km");
-      this->table->new_column("gm_nb5");
-      this->table->set_unit("gm_nb5","Msun");
-      this->table->new_column("r_nb5");
-      this->table->set_unit("r_nb5","km");
-    }
-    if (set->compute_cthick) {
-      this->table->new_column("nt");
-      this->table->set_unit("nt","1/fm^3");
-      this->table->new_column("Pt");
-      this->table->set_unit("Pt","1/fm^4");
-      for(int i=0;i<set->grid_size;i++) {
-        this->table->new_column(((string)"CT_")+o2scl::itos(i));
-        this->table->set_unit(((string)"CT_")+o2scl::itos(i),"km");
-      }
-    }
-  }
-  if (set->addl_quants) {
+  
     for(int i=0;i<set->grid_size;i++) {
-      this->table->new_column(((string)"MB_")+o2scl::itos(i));
-      this->table->set_unit(((string)"MB_")+o2scl::itos(i),"Msun");
-      this->table->new_column(((string)"BE_")+o2scl::itos(i));
-      this->table->set_unit(((string)"BE_")+o2scl::itos(i),"Msun");
+      this->table->new_column(((string)"R_")+o2scl::itos(i));
+      this->table->set_unit(((string)"R_")+o2scl::itos(i),
+                            "km");
+      if (m.has_eos) {
+        this->table->new_column(((string)"PM_")+o2scl::itos(i));
+        this->table->set_unit(((string)"PM_")+o2scl::itos(i),
+                              "1/fm^4");
+      }
+    }
+    if (m.has_eos) {
+      if (set->baryon_density) {
+        for(int i=0;i<set->grid_size;i++) {
+          this->table->new_column(((string)"Pnb_")+o2scl::itos(i));
+          this->table->set_unit(((string)"Pnb_")+o2scl::itos(i),
+                                "1/fm^4");
+          this->table->new_column(((string)"EoA_")+o2scl::itos(i));
+          this->table->set_unit(((string)"EoA_")+o2scl::itos(i),
+                                "MeV");
+        }
+      }
+      if (m.has_esym) {
+        this->table->new_column("S");
+        this->table->set_unit("S","1/fm");
+        this->table->new_column("L");
+        this->table->set_unit("L","1/fm");
+      }
+      this->table->new_column("R_max");
+      this->table->set_unit("R_max","km");
+      this->table->new_column("M_max");
+      this->table->set_unit("M_max","Msun");
+      this->table->new_column("P_max");
+      this->table->set_unit("P_max","1/fm^4");
+      this->table->new_column("e_max");
+      this->table->set_unit("e_max","1/fm^4");
+      if (set->baryon_density) {
+        this->table->new_column("nb_max");
+        this->table->set_unit("nb_max","1/fm^3");
+      }
+      for(size_t i=0;i<nsd->n_sources;i++) {
+        this->table->new_column(((string)"ce_")+nsd->source_names[i]);
+        this->table->set_unit(((string)"ce_")+nsd->source_names[i],
+                              "1/fm^4");
+      }
+      if (set->baryon_density) {
+        for(size_t i=0;i<nsd->n_sources;i++) {
+          this->table->new_column(((string)"cnb_")+nsd->source_names[i]);
+          this->table->set_unit(((string)"cnb_")+nsd->source_names[i],
+                                "1/fm^3");
+        }
+        this->table->new_column("gm_nb1");
+        this->table->set_unit("gm_nb1","Msun");
+        this->table->new_column("r_nb1");
+        this->table->set_unit("r_nb1","km");
+        this->table->new_column("gm_nb2");
+        this->table->set_unit("gm_nb2","Msun");
+        this->table->new_column("r_nb2");
+        this->table->set_unit("r_nb2","km");
+        this->table->new_column("gm_nb3");
+        this->table->set_unit("gm_nb3","Msun");
+        this->table->new_column("r_nb3");
+        this->table->set_unit("r_nb3","km");
+        this->table->new_column("gm_nb4");
+        this->table->set_unit("gm_nb4","Msun");
+        this->table->new_column("r_nb4");
+        this->table->set_unit("r_nb4","km");
+        this->table->new_column("gm_nb5");
+        this->table->set_unit("gm_nb5","Msun");
+        this->table->new_column("r_nb5");
+        this->table->set_unit("r_nb5","km");
+      }
+      if (set->compute_cthick) {
+        this->table->new_column("nt");
+        this->table->set_unit("nt","1/fm^3");
+        this->table->new_column("Pt");
+        this->table->set_unit("Pt","1/fm^4");
+        for(int i=0;i<set->grid_size;i++) {
+          this->table->new_column(((string)"CT_")+o2scl::itos(i));
+          this->table->set_unit(((string)"CT_")+o2scl::itos(i),"km");
+        }
+      }
+    }
+    if (set->addl_quants) {
+      for(int i=0;i<set->grid_size;i++) {
+        this->table->new_column(((string)"MB_")+o2scl::itos(i));
+        this->table->set_unit(((string)"MB_")+o2scl::itos(i),"Msun");
+        this->table->new_column(((string)"BE_")+o2scl::itos(i));
+        this->table->set_unit(((string)"BE_")+o2scl::itos(i),"Msun");
 
-      this->table->new_column(((string)"I_")+o2scl::itos(i));
-      this->table->set_unit(((string)"I_")+o2scl::itos(i),
-          "Msun*km^2");
-      this->table->new_column(((string)"I_bar_")+o2scl::itos(i));
+        this->table->new_column(((string)"I_")+o2scl::itos(i));
+        this->table->set_unit(((string)"I_")+o2scl::itos(i),
+                              "Msun*km^2");
+        this->table->new_column(((string)"I_bar_")+o2scl::itos(i));
       
-      this->table->new_column(((string)"Lambda_bar_")+o2scl::itos(i));
+        this->table->new_column(((string)"Lambda_bar_")+o2scl::itos(i));
+      }
     }
-  }
 
-  if (nsd->source_fnames_alt.size()>0) {
-    for(size_t i=0;i<nsd->n_sources;i++) {
-      this->table->new_column(((std::string)"atm_")+o2scl::szttos(i));
+    if (nsd->source_fnames_alt.size()>0) {
+      for(size_t i=0;i<nsd->n_sources;i++) {
+        this->table->new_column(((std::string)"atm_")+o2scl::szttos(i));
+      }
     }
-  }
 
-  if (model_type==((string)"qmc_threep_ligo") ||
-      model_type==((string)"tews_threep_ligo") ||
-      model_type==((string)"tews_fixp_ligo") ||
-      model_type==((string)"qmc_fixp_ligo")) {
-    this->table->new_column("M_chirp");
-    this->table->set_unit("M_chirp","Msun");
-    this->table->new_column("m1");
-    this->table->set_unit("m1","Msun");
-    this->table->new_column("m2");
-    this->table->set_unit("m2","Msun");
-    this->table->new_column("R1");
-    this->table->set_unit("R1","km");
-    this->table->new_column("R2");
-    this->table->set_unit("R2","km");
-    this->table->new_column("I1");
-    this->table->set_unit("I1","Msun*km^2");
-    this->table->new_column("I2");
-    this->table->set_unit("I2","Msun*km^2");
-    this->table->new_column("I_bar1");
-    this->table->new_column("I_bar2");
-    this->table->new_column("Lambda1");
-    this->table->new_column("Lambda2");
-    this->table->new_column("Lambdat");
-    this->table->new_column("del_Lambdat");    
-    this->table->new_column("Lambda_rat");
-    this->table->new_column("q6");
-    this->table->new_column("Lambda_s");
-    this->table->new_column("Lambda_a");
-    this->table->new_column("Lambda_a_YY");
-    this->table->new_column("C1");
-    this->table->new_column("C2");
-    this->table->new_column("tews_prob");
-    this->table->new_column("ligo_prob");
-    if (set->prior_q) {
-      this->table->new_column("eta");
-      this->table->new_column("delta_m");
-    }
-    if (set->prior_delm) {
-      this->table->new_column("q");
+    if (model_type==((string)"qmc_threep_ligo") ||
+        model_type==((string)"tews_threep_ligo") ||
+        model_type==((string)"tews_fixp_ligo") ||
+        model_type==((string)"qmc_fixp_ligo")) {
+      this->table->new_column("M_chirp");
+      this->table->set_unit("M_chirp","Msun");
+      this->table->new_column("m1");
+      this->table->set_unit("m1","Msun");
+      this->table->new_column("m2");
+      this->table->set_unit("m2","Msun");
+      this->table->new_column("R1");
+      this->table->set_unit("R1","km");
+      this->table->new_column("R2");
+      this->table->set_unit("R2","km");
+      this->table->new_column("I1");
+      this->table->set_unit("I1","Msun*km^2");
+      this->table->new_column("I2");
+      this->table->set_unit("I2","Msun*km^2");
+      this->table->new_column("I_bar1");
+      this->table->new_column("I_bar2");
+      this->table->new_column("Lambda1");
+      this->table->new_column("Lambda2");
+      this->table->new_column("Lambdat");
+      this->table->new_column("del_Lambdat");    
+      this->table->new_column("Lambda_rat");
+      this->table->new_column("q6");
+      this->table->new_column("Lambda_s");
+      this->table->new_column("Lambda_a");
+      this->table->new_column("Lambda_a_YY");
+      this->table->new_column("C1");
+      this->table->new_column("C2");
+      this->table->new_column("tews_prob");
+      this->table->new_column("ligo_prob");
       this->table->new_column("eta");
     }
-    if (set->prior_eta) {
-      this->table->new_column("q");
-      this->table->new_column("delta_m");
-    }
   }
-  }
-
+  
   // -----------------------------------------------------------
   // Make grids
 
@@ -768,27 +757,11 @@ int mcmc_bamr::mcmc_func(std::vector<std::string> &sv, bool itive_com) {
   }
   
   if (model_type==((string)"tews_threep_ligo")) {
-    if (set->prior_eta) {
-      names[10]="eta";
-    }
-    if (set->prior_q) {
-      names[10]="q";
-    }
-    if (set->prior_delm) {
-      names[10]="delta_m";
-    }
+    names[10]="q";
   }
   
   if (model_type==((string)"tews_fixp_ligo")) {
-    if (set->prior_eta) {
-      names[9]="eta";
-    }
-    if (set->prior_q) {
-      names[9]="q";
-    }
-    if (set->prior_delm) {
-      names[9]="delta_m";
-    }
+    names[9]="q";
   }
   
   vector<bamr::point_funct> pfa(n_threads);
@@ -812,7 +785,7 @@ int mcmc_bamr::mcmc_func(std::vector<std::string> &sv, bool itive_com) {
     int pinfo=train_emulator(set->emu_train,names);
     if (pinfo!=0) {
       O2SCL_ERR2("Training emulator failed in ",
-                "mcmc_bamr::mcmc_func().",o2scl::exc_efailed);
+                 "mcmc_bamr::mcmc_func().",o2scl::exc_efailed);
     }
 
     // Copy trained method to bint classes
