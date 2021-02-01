@@ -107,9 +107,6 @@ namespace bamr {
     o2scl::cli::parameter_double p_m_low;
     o2scl::cli::parameter_double p_m_high;
     o2scl::cli::parameter_double p_mvsr_pr_inc;
-    o2scl::cli::parameter_bool p_prior_q;
-    o2scl::cli::parameter_bool p_prior_eta;
-    o2scl::cli::parameter_bool p_prior_delm;
     o2scl::cli::parameter_string p_data_dir;
     o2scl::cli::parameter_bool p_apply_emu;
     o2scl::cli::parameter_bool p_couple_threads;
@@ -217,18 +214,6 @@ namespace bamr {
      */
     bool couple_threads;
     //@}
-
-    /** \brief If true, use the eta prior
-     */
-    bool prior_eta;
-
-    /** \brief If true, use the q prior
-     */
-    bool prior_q;
-
-    /** \brief If true, use the delta_m prior
-     */
-    bool prior_delm;
 
     /** \name Histogram limits
      */
@@ -399,18 +384,6 @@ namespace bamr {
 	"on evaluating each point is written to cout. This value "+
 	"defaults to zero.";
       cl.par_list.insert(std::make_pair("verbose",&p_verbose));
-
-      p_prior_q.b=&prior_q;
-      p_prior_q.help="";
-      cl.par_list.insert(std::make_pair("prior_q",&p_prior_q));
-
-      p_prior_eta.b=&prior_eta;
-      p_prior_eta.help="";
-      cl.par_list.insert(std::make_pair("prior_eta",&p_prior_eta));
-
-      p_prior_delm.b=&prior_delm;
-      p_prior_delm.help="";
-      cl.par_list.insert(std::make_pair("prior_delm",&p_prior_delm));
 
       p_apply_intsc.b=&apply_intsc;
       p_apply_intsc.help="help";

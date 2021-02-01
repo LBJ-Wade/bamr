@@ -559,12 +559,12 @@ compare:
 
 make_train:
 	./bamr_nompi -threads 1 -set aff_inv 0 -set couple_threads 0 \
-		-set prefix compare -set max_iters 1 \
+		-set prefix make_train -set max_time 86400 \
 		-set n_walk 120 -set step_fac 2.0 \
 		-set norm_max 0 -set addl_quants 1 -set inc_baryon_mass 1 \
 		-set crust_from_L 0 -set compute_cthick 1 \
-		-set file_update_time 1800 -set verbose 1 \
-		-set mcmc_verbose 1 \
+		-set file_update_time 1800 -set verbose 3 \
+		-set mcmc_verbose 2 \
 		-add-data-alt 6304 \
 		data/shb18/6304_H_nopl_syst_wilm.o2 \
 		data/shb18/6304_He_nopl_syst_wilm.o2 \
@@ -609,10 +609,7 @@ make_train:
 		data/nicer/0030_st_pst.o2 \
 		data/nicer/0030_st_pst.o2 \
 		prob 0.7 table3d \
-		-set apply_intsc 1 \
-		-set cached_intsc 1 \
 		-model tews_threep_ligo \
-		-set prior_eta 1 \
 		-mcmc > make_train.scr 2>&1 &
 
 #		acol -read compare_0_out -get-row 0 > compare.txt

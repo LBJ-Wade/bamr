@@ -213,18 +213,7 @@ int bamr_class::fill(const ubvector &pars, double weight,
       line.push_back(dat.eos.get_constant("C2"));
       line.push_back(dat.eos.get_constant("tews"));
       line.push_back(dat.eos.get_constant("ligo_prob"));
-      if (set->prior_q) {
-        line.push_back(dat.eos.get_constant("eta"));
-        line.push_back(dat.eos.get_constant("delta_m"));
-      }
-      if (set->prior_delm) {
-        line.push_back(dat.eos.get_constant("q"));
-        line.push_back(dat.eos.get_constant("eta"));
-      }
-      if (set->prior_eta) {
-        line.push_back(dat.eos.get_constant("q"));
-        line.push_back(dat.eos.get_constant("delta_m"));
-      }
+      line.push_back(dat.eos.get_constant("eta"));
     }
   }  
 
@@ -311,7 +300,6 @@ int bamr_class::compute_point(const ubvector &pars, std::ofstream &scr_out,
     // are out of range
 	  
     for(size_t i=0;i<nsd->n_sources;i++) {
-      cout << "Here1" << endl;
       double mass=dat.sourcet.get("M",i);
       double rad=dat.sourcet.get("R",i);
       if (mass<set->in_m_min || mass>set->in_m_max || 
@@ -885,128 +873,29 @@ int bamr_class::compute_point(const ubvector &pars, std::ofstream &scr_out,
       if (model_type==((string)"tews_fixp_ligo") ||
           model_type==((string)"tews_threep_ligo")) {
 
-        if (set->prior_q) {
-	        
-          if (model_type==((string)"tews_fixp_ligo")) {
-            M_chirp_det=pars[8];
-            q=pars[9];
-            z_cdf=pars[10];
-          } else {
-            M_chirp_det=pars[9];
-            q=pars[10];
-            z_cdf=pars[11];
-          }
-	        
-          prob_dens_gaussian pdg(0.0099,0.0009);
-          z=pdg.invert_cdf(z_cdf);
-          M_chirp=M_chirp_det/(1.0+z);
-          dat.eos.add_constant("M_chirp",M_chirp);  
-	      
-          m1=M_chirp*pow(1.0+q,0.2)/pow(q,0.6);
-          m2=M_chirp*pow(q,0.4)*pow(1.0+q,0.2);
-
-          eta=(m1*m2)/((m1+m2)*(m1+m2));
-          delta_m=(m1-m2)/(m1+m2);
-          dat.eos.add_constant("eta",eta);
-          dat.eos.add_constant("delta_m",delta_m);
-
-        } else if (set->prior_delm) {
-	        
-          if (model_type==((string)"tews_fixp_ligo")) {
-            M_chirp_det=pars[8];
-            delta_m=pars[9];
-            z_cdf=pars[10];
-          } else {
-            M_chirp_det=pars[9];
-            delta_m=pars[10];
-            z_cdf=pars[11];
-          }
-	        
-	       
-          prob_dens_gaussian pdg(0.0099,0.0009);
-          z=pdg.invert_cdf(z_cdf);
-          M_chirp=M_chirp_det/(1.0+z);
-          dat.eos.add_constant("M_chirp",M_chirp);  
-	      
-          double fac = pow((-2)*pow(1+delta_m,2)/pow(-1+delta_m,3), 0.2);
-          m1 = M_chirp*fac;
-          m2 = M_chirp*fac*((1-delta_m)/(1+delta_m));
-	        
-          q = m2/m1;
-          eta=(m1*m2)/((m1+m2)*(m1+m2));
-          dat.eos.add_constant("q",q);
-          dat.eos.add_constant("eta",eta);
-
+        if (model_type==((string)"tews_fixp_ligo")) {
+          M_chirp_det=pars[8];
+          q=pars[9];
+          z_cdf=pars[10];
         } else {
-
-          // eta prior
-	        
-          if (model_type==((string)"tews_fixp_ligo")) {
-            M_chirp_det=pars[8];
-            eta=pars[9];
-            z_cdf=pars[10];
-          } else {
-            M_chirp_det=pars[9];
-            eta=pars[10];
-            z_cdf=pars[11];
-          }
-	        
-          prob_dens_gaussian pdg(0.0099,0.0009);
-          z=pdg.invert_cdf(z_cdf);
-          M_chirp=M_chirp_det/(1.0+z);
-          dat.eos.add_constant("M_chirp",M_chirp);  
-	      
-          m1=(pow(pow(M_chirp,5.0)/pow(eta,3.0)-
-                  (5.0*pow(M_chirp,5.0))/pow(eta,2.0) 
-                  +(5.0*pow(M_chirp,5.0))/eta+
-                  sqrt(-(pow(M_chirp,10)*(-1.0+4.0*eta)*
-                         pow(1.0-3.0*eta+pow(eta,2.0),2.0)))/
-                  pow(eta,3.0),0.2)/pow(2,0.2));
-	        
-	        
-          m2=(((pow(M_chirp,5.0)*
-                pow(pow(M_chirp,5.0)/pow(eta,3.0)-
-                    (5.0*pow(M_chirp,5.0))/pow(eta,2.0) 
-                    +(5.0*pow(M_chirp,5.0))/eta+
-                    sqrt(-(pow(M_chirp,10)*(-1.0+4.0*eta)
-                           *pow(1.0-3.0*eta+pow(eta,2.0),2.0)))/
-                    pow(eta,3.0),0.2))/(2.*pow(2,0.2)) 
-               -(5.0*pow(M_chirp,5.0)*eta*
-                 pow(pow(M_chirp,5.0)/
-                     pow(eta,3.0)-(5.0*pow(M_chirp,5.0))/pow(eta,2.0)+
-                     (5.0*pow(M_chirp,5.0))/eta+
-                     sqrt(-(pow(M_chirp,10)*(-1.0+4.0*eta)*
-                            pow(1.0-3.0*eta+pow(eta,2.0),2.0)))/
-                     pow(eta,3.0),0.2))/(2.*pow(2,0.2))+
-               (7*pow(M_chirp,5.0)*pow(eta,2.0)*
-                pow(pow(M_chirp,5.0)/pow(eta,3.0)-
-                    (5.0*pow(M_chirp,5.0))/pow(eta,2.0)+
-                    (5.0*pow(M_chirp,5.0))/eta+
-                    sqrt(-(pow(M_chirp,10)*(-1.0+4.0*eta)*
-                           pow(1.0-3.0*eta+pow(eta,2.0),2.0)))/
-                    pow(eta,3.0),0.2))/(2.*pow(2,0.2))-
-               (pow(M_chirp,5.0)*pow(eta,3.0)*
-                pow(pow(M_chirp,5.0)/
-                    pow(eta,3.0)-(5.0*pow(M_chirp,5.0))/pow(eta,2.0)+
-                    (5.0*pow(M_chirp,5.0))/eta+
-                    sqrt(-(pow(M_chirp,10)*(-1.0+4.0*eta)*
-                           pow(1.0-3.0*eta+pow(eta,2.0),2.0)))/
-                    pow(eta,3.0),0.2))/pow(2,0.2)-
-               (sqrt(-(pow(M_chirp,10)*(-1.0+4.0*eta)*
-                       pow(1.0-3.0*eta+pow(eta,2.0),2.0)))*
-                pow(pow(M_chirp,5.0)/pow(eta,3.0)-
-                    (5.0*pow(M_chirp,5.0))/pow(eta,2.0)+
-                    (5.0*pow(M_chirp,5.0))/eta+
-                    sqrt(-(pow(M_chirp,10)*(-1.0+4.0*eta)*
-                           pow(1.0-3.0*eta+pow(eta,2.0),2.0)))/
-                    pow(eta,3.0),0.2))/(2.*pow(2,0.2)))/
-              (pow(M_chirp,5.0)*eta*(1.0-3.0*eta+pow(eta,2.0))));
-	        
-          q = m2/m1;
-          delta_m=(m1-m2)/(m1+m2);
-          dat.eos.add_constant("q",q);
-          dat.eos.add_constant("delta_m",delta_m);
+          M_chirp_det=pars[9];
+          q=pars[10];
+          z_cdf=pars[11];
         }
+	        
+        prob_dens_gaussian pdg(0.0099,0.0009);
+        z=pdg.invert_cdf(z_cdf);
+        M_chirp=M_chirp_det/(1.0+z);
+        dat.eos.add_constant("M_chirp",M_chirp);  
+	
+        m1=M_chirp*pow(1.0+q,0.2)/pow(q,0.6);
+        m2=M_chirp*pow(q,0.4)*pow(1.0+q,0.2);
+        
+        eta=(m1*m2)/((m1+m2)*(m1+m2));
+        delta_m=(m1-m2)/(m1+m2);
+        dat.eos.add_constant("eta",eta);
+        dat.eos.add_constant("delta_m",delta_m);
+
       }
 
       double Mmax=dat.mvsr.max("gm");
@@ -1151,7 +1040,7 @@ int bamr_class::compute_point(const ubvector &pars, std::ofstream &scr_out,
 	        
           ubvector lin_v(3);
           lin_v[0]=M_chirp_det;
-          lin_v[1]=delta_m;
+          lin_v[1]=q;
           lin_v[2]=Lambdat;
 
           double prob=ligo_data_table.interp_linear(lin_v);
@@ -1172,13 +1061,13 @@ int bamr_class::compute_point(const ubvector &pars, std::ofstream &scr_out,
             }
           }
           prob_data=prob;
-		
+          
         }
 
         dat.eos.add_constant("ligo_prob",prob_data);
         log_wgt+=(prob_data);
       }
-
+      
       // End of section for additional LIGO constraints
     }
 
@@ -1502,14 +1391,6 @@ void set_parameter(void *bcp2, void *setp2, char *param_name, double val) {
       setp->cached_intsc=false;
       cout << "Setting cached_intsc to false." << endl;
     }
-  } else if ((string)param_name==(string)"prior_eta") {
-    if (val>0.5) {
-      setp->prior_eta=true;
-      cout << "Setting prior_eta to true." << endl;
-    } else {
-      setp->prior_eta=false;
-      cout << "Setting prior_eta to false." << endl;
-    }
   } else if ((string)param_name==(string)"verbose") {
     setp->verbose=((int)val);
     cout << "Setting verbose to " << setp->verbose << endl;
@@ -1641,7 +1522,7 @@ int init(void *bcp2, void *mdp2, void *nsd2, void *setp2,
       bcp->model_type==((string)"tews_fixp_ligo") ||
       bcp->model_type==((string)"qmc_fixp_ligo")) {
     hdf_file hfx;
-    string fname=setp->data_dir+"/ligo/ligo_tg3_v4.o2";
+    string fname=setp->data_dir+"/ligo/gw170817_kde.o2";
     hfx.open(fname);
     std::string name;
     hdf_input(hfx,bcp->ligo_data_table,name);
