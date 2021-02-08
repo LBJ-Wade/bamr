@@ -680,6 +680,5 @@ test_emu:
 		data/nicer/0030_st_pst.o2 \
 		prob 0.7 table3d \
 		-model tews_threep_ligo \
-		-set apply_emu 1 -set emu_train emu_test/nicer_dpde_test \
-		-set prior_eta 1 \
+		-set apply_emu 1 -set emu_train make_train_nofail_0_out \
 		-mcmc 

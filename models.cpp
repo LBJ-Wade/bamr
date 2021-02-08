@@ -649,17 +649,16 @@ void model::compute_star(const ubvector &pars, std::ofstream &scr_out,
   if (has_eos) {
     
     // Compute speed of sound squared
-    dat.mvsr.deriv("ed","pr","dpde");
+    dat.eos.deriv("ed","pr","cs2");
+    double ed_max=dat.mvsr.max("ed");
 
-    for(size_t i=0;i<dat.mvsr.get_nlines();i++) {
-      if ((dat.mvsr)["dpde"][i]>1.0) {
+    for(size_t i=0;i<dat.eos.get_nlines();i++) {
+      if (dat.eos.get("ed",i)<ed_max && dat.eos["cs2"][i]>1.0) {
 	scr_out.precision(4);
 	scr_out << "Rejected: Acausal."<< std::endl;
-	scr_out << "ed_max="
-		<< dat.mvsr.max("ed") << " ed_bad="
-		<< (dat.mvsr)["ed"][i] << " pr_max=" 
-		<< dat.mvsr.max("pr") << " pr_bad=" 
-		<< (dat.mvsr)["pr"][i] << std::endl;
+	scr_out << "ed_max=" << ed_max
+                << " ed_bad=" << (dat.eos)["ed"][i]
+                << " pr_bad=" << (dat.eos)["pr"][i] << std::endl;
 	scr_out.precision(6);
 	ret=ix_acausal;
 	return;
