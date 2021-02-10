@@ -663,11 +663,11 @@ test_emu:
 		data/shb18/X7_H_syst_wilm.o2 \
 		data/shb18/X7_He_syst_wilm.o2 \
 		like 0.7 rescaled \
-		-add-data-alt 1810 \
+		-add-data-alt 1810b \
 		data/nks15/1810.o2 \
 		data/nks15/1810.o2 \
 		weights 0.7 mcarlo \
-		-add-data-alt 1724 \
+		-add-data-alt 1724b \
 		data/nks15/1724.o2 \
 		data/nks15/1724.o2 \
 		weights 0.7 mcarlo \

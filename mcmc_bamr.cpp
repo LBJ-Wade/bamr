@@ -96,6 +96,8 @@ int mcmc_bamr::train_emulator(std::string train_filename,
   if (PyCallable_Check(train_method)) {
     PyObject *train_res=PyObject_CallObject(train_method,train_args);
     if (train_res==0) {
+      cout << "Here0." << endl;
+      int errx=PyRun_SimpleString("PyErr_Print()");
       O2SCL_ERR("Training method failed.",o2scl::exc_einval);
     }
   }

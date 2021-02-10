@@ -96,6 +96,7 @@ class gp_emulator:
 
         print("emulator.py, parameters:",self.params)
         print("emulator.py, targets:",self.target_cols)
+        print("emulator.py, hdf_file:",hdf_file)
 
         # Read train file
         train_file = h5py.File(hdf_file, 'r')
@@ -103,6 +104,7 @@ class gp_emulator:
         # Read the training columns
         X_train = np.array([[]])
         for i in range(0, len(self.params)):
+            print('Reading training column',self.params[i])
             if (i == 0):
                 temp = np.array(
                     train_file.file["markov_chain_0/data/"+
@@ -117,6 +119,7 @@ class gp_emulator:
         # Read the target columns
         Y_train = np.array([[]])
         for i in range(0, len(self.target_cols)):
+            print('Reading target column',self.target_cols[i])
             if (i == 0):
                 temp = np.array(
                     train_file.file["markov_chain_0/data/"+
@@ -132,7 +135,9 @@ class gp_emulator:
 
         # Standardize the parameters
         for i in range(0, len(X_train)):
+            print('Standardizing parameter',i)
             temp, temp_mean, temp_std = norm(X_train[i])
+            print('temp_std',temp_std)
             self.param_mean_train.update({self.params[i]: temp_mean})
             self.param_std_train.update({self.params[i]: temp_std})
             X_train[i] = temp
@@ -141,7 +146,10 @@ class gp_emulator:
 
         # Standardize the targets
         for i in range(0, len(Y_train)):
+            print('Standardizing target',i,self.target_cols[i])
             temp, temp_mean, temp_std = norm(Y_train[i])
+            print('temp,temp_mean,temp_std',temp,temp_mean,temp_std)
+            print(Y_train[i])
             self.target_mean_train.update({self.target_cols[i]: temp_mean})
             self.target_std_train.update({self.target_cols[i]: temp_std})
             Y_train[i] = temp
