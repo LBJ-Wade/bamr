@@ -146,9 +146,10 @@ class gp_emulator:
 
         # Standardize the targets
         for i in range(0, len(Y_train)):
-            print('Standardizing target',i)
+            print('Standardizing target',i,self.target_cols[i])
             temp, temp_mean, temp_std = norm(Y_train[i])
-            print('temp_std',temp_std)
+            print('temp,temp_mean,temp_std',temp,temp_mean,temp_std)
+            print(Y_train[i])
             self.target_mean_train.update({self.target_cols[i]: temp_mean})
             self.target_std_train.update({self.target_cols[i]: temp_std})
             Y_train[i] = temp
