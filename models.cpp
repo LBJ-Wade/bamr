@@ -649,24 +649,38 @@ void model::compute_star(const ubvector &pars, std::ofstream &scr_out,
   if (has_eos) {
     
     // Compute speed of sound squared
-    dat.eos.deriv("ed","pr","cs2");
+    double ed_max=dat.mvsr.max("ed");
+    
     for(size_t i=0;i<dat.eos.get_nlines();i++) {
-      if (!std::isfinite(dat.eos.get("cs2",i)) || dat.eos.get("cs2",i)<0.0) {
+      if (dat.eos.get("ed",i)>ed_max && !std::isfinite(dat.eos.get("pr",i))) {
+        dat.eos.set("pr",i,0.0);
+      }
+    }
+
+    dat.eos.deriv("ed","pr","cs2");
+    
+    for(size_t i=0;i<dat.eos.get_nlines();i++) {
+      if (dat.eos.get("ed",i)<ed_max &&
+          (!std::isfinite(dat.eos.get("cs2",i)) || dat.eos.get("cs2",i)<0.0)) {
         cout << "cs2 not finite." << endl;
-        cout << i << " " << dat.eos.get("ed",i) << " "
-             << dat.eos.get("pr",i) << endl;
+        cout << "ed_max: " << ed_max << endl;
         if (i>0) {
-          cout << i << " " << dat.eos.get("ed",i-1) << " "
+          cout << i-1 << " " << dat.eos.get("ed",i-1) << " "
                << dat.eos.get("pr",i-1) << endl;
         }
+        cout << i << " " << dat.eos.get("ed",i) << " "
+             << dat.eos.get("pr",i) << endl;
         if (i<dat.eos.get_nlines()-1) {
-          cout << i << " " << dat.eos.get("ed",i+1) << " "
+          cout << i+1 << " " << dat.eos.get("ed",i+1) << " "
                << dat.eos.get("pr",i+1) << endl;
+        }
+        for(size_t j=0;j<dat.eos.get_nlines();j++) {
+          cout << j << " " << dat.eos.get("ed",j) << " "
+               << dat.eos.get("pr",j) << endl;
         }
         exit(-1);
       }
     }
-    double ed_max=dat.mvsr.max("ed");
 
     for(size_t i=0;i<dat.eos.get_nlines();i++) {
       if (dat.eos.get("ed",i)<ed_max && dat.eos["cs2"][i]>1.0) {
