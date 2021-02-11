@@ -216,17 +216,22 @@ void model::compute_star(const ubvector &pars, std::ofstream &scr_out,
   // If requested, compute the baryon density automatically
 
   if (has_eos && set->baryon_density && !dat.eos.is_column("nb")) {
-
-    cout << "Phasing out automatic baryon density calculation."
-	 << endl;
-    scr_out << "Phasing out automatic baryon density calculation."
-	    << endl;
-    exit(-1);
-    
-    // End of loop 'if (has_eos && baryon_density && 
-    // !dat.eos.is_column("nb")) {' 
+    O2SCL_ERR2("Setting baryon_density is true but EOS does not ",
+               "have a column \"nb\".",o2scl::exc_einval);
   }
 
+  for(size_t j=0;j<dat.eos.get_nlines();j++) {
+    if (!std::isfinite(dat.eos.get("pr",j))) {
+      for(size_t k=0;k<dat.eos.get_nlines();k++) {
+        cout << k << " " << dat.eos.get("ed",k) << " ";
+        cout << dat.eos.get("pr",k) << " ";
+        cout << dat.eos.get("nb",k) << endl;
+      }
+      cout << "Point 2." << endl;
+      exit(-1);
+    }
+  }
+  
   // ---------------------------------------------------------------
 
   if (has_eos) {
@@ -642,6 +647,18 @@ void model::compute_star(const ubvector &pars, std::ofstream &scr_out,
     exit(0);
   }
 
+  for(size_t j=0;j<dat.eos.get_nlines();j++) {
+    if (!std::isfinite(dat.eos.get("pr",j))) {
+      for(size_t k=0;k<dat.eos.get_nlines();k++) {
+        cout << k << " " << dat.eos.get("ed",k) << " ";
+        cout << dat.eos.get("pr",k) << " ";
+        cout << dat.eos.get("nb",k) << endl;
+      }
+      cout << "point 3." << endl;
+      exit(-1);
+    }
+  }
+  
   // -----------------------------------------------------------------
   // Check causality. Note that we have to do this after the rows for
   // the unstable branch have been removed from the mass-radius table.
@@ -3040,7 +3057,18 @@ void tews_threep_ligo::compute_eos(const ubvector &params, int &ret,
     dat.eos.line_of_data(3,line);
     
   }
-
+  
+  for(size_t j=0;j<dat.eos.get_nlines();j++) {
+    if (!std::isfinite(dat.eos.get("pr",j))) {
+      for(size_t k=0;k<dat.eos.get_nlines();k++) {
+        cout << k << " " << dat.eos.get("ed",k) << " ";
+        cout << dat.eos.get("pr",k) << " ";
+        cout << dat.eos.get("nb",k) << endl;
+      }
+      exit(-1);
+    }
+  }
+  
   if (debug) exit(-1);
 
   return;
