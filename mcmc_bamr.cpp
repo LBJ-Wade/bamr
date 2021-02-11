@@ -234,7 +234,7 @@ int mcmc_bamr::mcmc_init() {
     return exc_efailed;
   }
 
-  if(set->apply_emu == false){
+  if (set->apply_emu==false) {
 
     // -----------------------------------------------------------
     // Add columns to table
@@ -378,10 +378,7 @@ int mcmc_bamr::mcmc_init() {
       }
     }
 
-    if (model_type==((string)"qmc_threep_ligo") ||
-        model_type==((string)"tews_threep_ligo") ||
-        model_type==((string)"tews_fixp_ligo") ||
-        model_type==((string)"qmc_fixp_ligo")) {
+    if (set->inc_ligo) {
       this->table->new_column("M_chirp");
       this->table->set_unit("M_chirp","Msun");
       this->table->new_column("m1");
@@ -459,20 +456,6 @@ int mcmc_bamr::mcmc_init() {
     }
   }
 
-  if (model_type==((string)"qmc_threep_ligo") ||
-      model_type==((string)"tews_threep_ligo") ||
-      model_type==((string)"tews_fixp_ligo") ||
-      model_type==((string)"qmc_fixp_ligo")) {
-    hdf_file hfx;
-    for(size_t i=0;i<n_threads;i++) {
-      bamr_class &bc=dynamic_cast<bamr_class &>(*(bc_arr[i]));
-      hfx.open("data/ligo/ligo_tg3_v4.o2");
-      std::string name;
-      hdf_input(hfx,bc.ligo_data_table,name);
-      hfx.close();
-    }
-  }
-  
   if (this->verbose>=2) {
     std::cout << "(rank " << this->mpi_rank
 	      << ") End mcmc_bamr::mcmc_init()." << std::endl;
@@ -559,6 +542,12 @@ int mcmc_bamr::set_model(std::vector<std::string> &sv, bool itive_com) {
   } else if (sv[1]==((string)"tews_fixp_ligo")) {
     for(size_t i=0;i<n_threads;i++) {
       std::shared_ptr<model> mnew(new tews_fixp_ligo(set,nsd));
+      bc_arr[i]->mod=mnew;
+      bc_arr[i]->model_type=sv[1];
+    }
+  } else if (sv[1]==((string)"new_poly")) {
+    for(size_t i=0;i<n_threads;i++) {
+      std::shared_ptr<model> mnew(new new_poly(set,nsd));
       bc_arr[i]->mod=mnew;
       bc_arr[i]->model_type=sv[1];
     }
@@ -683,8 +672,7 @@ int mcmc_bamr::mcmc_func(std::vector<std::string> &sv, bool itive_com) {
   std::vector<std::string> names;
   std::vector<std::string> units;
 
-  ubvector low;
-  ubvector high;
+  vector<double> low, high;
   // Get upper and lower parameter limits and also the column names
   // and units for the data table (which also automatically includes
   // nuisance variables for the data points). The other columns and
@@ -692,49 +680,26 @@ int mcmc_bamr::mcmc_func(std::vector<std::string> &sv, bool itive_com) {
   // to table::new_column().
   bc_arr[0]->mod->get_param_info(names,units,low,high);
 
+  nsd->data_params(names,units,low,high,set);
+  
   if (set->apply_intsc) {
-
-    // Ugly hack to increase the size of the 'low' and 'high' vectors
-    ubvector low2(low.size()+nsd->n_sources);
-    ubvector high2(low.size()+nsd->n_sources);
-    vector_copy(low.size(),low,low2);
-    vector_copy(high.size(),high,high2);
 
     for(size_t i=0;i<nsd->n_sources;i++) {
       names.push_back(((string)"log10_is_")+nsd->source_names[i]);
       units.push_back("");
-      low2[i+low.size()]=-2.0;
-      high2[i+high.size()]=2.0;
+      low.push_back(-2.0);
+      high.push_back(2.0);
     }
-
-    // Ugly hack, part 2
-    low.resize(low2.size());
-    high.resize(high2.size());
-    vector_copy(low.size(),low2,low);
-    vector_copy(high.size(),high2,high);
-    
   }
 
   if (set->apply_emu) {
     
-    // Ugly hack to increase the size of the 'low' and 'high' vectors
-    ubvector low2(low.size()+nsd->n_sources);
-    ubvector high2(low.size()+nsd->n_sources);
-    vector_copy(low.size(),low,low2);
-    vector_copy(high.size(),high,high2);
-    
     for(size_t i=0;i<nsd->n_sources;i++) {
       names.push_back(((string)"atm_")+o2scl::szttos(i));
       units.push_back("");
-      low2[i+low.size()]=0.0;
-      high2[i+high.size()]=1.0;
+      low.push_back(0.0);
+      high.push_back(1.0);
     }
-    
-    // Ugly hack, part 2
-    low.resize(low2.size());
-    high.resize(high2.size());
-    vector_copy(low.size(),low2,low);
-    vector_copy(high.size(),high2,high);
     
   }
   
@@ -745,12 +710,14 @@ int mcmc_bamr::mcmc_func(std::vector<std::string> &sv, bool itive_com) {
   // user
   if (this->initial_points.size()==0) {
     // Get the parameter initial values for this model 
-    ubvector init(names.size());
+    std::vector<double> init;
     bc_arr[0]->mod->initial_point(init);
+
+    nsd->initial_point(set,init);
 
     if (set->apply_intsc) {
       for(size_t i=0;i<nsd->n_sources;i++) {
-	init[i+bc_arr[0]->mod->n_eos_params+nsd->n_sources]=-0.5;
+	init.push_back(-0.5);
       }
     }
     
@@ -758,15 +725,10 @@ int mcmc_bamr::mcmc_func(std::vector<std::string> &sv, bool itive_com) {
     // to be able to expect that different entries in the initial_points
     // array
     this->initial_points.clear();
-    this->initial_points.push_back(init);
-  }
-  
-  if (model_type==((string)"tews_threep_ligo")) {
-    names[10]="q";
-  }
-  
-  if (model_type==((string)"tews_fixp_ligo")) {
-    names[9]="q";
+
+    ubvector init2(init.size());
+    vector_copy(init,init2);
+    this->initial_points.push_back(init2);
   }
   
   vector<bamr::point_funct> pfa(n_threads);
@@ -814,7 +776,10 @@ int mcmc_bamr::mcmc_func(std::vector<std::string> &sv, bool itive_com) {
   }
 
   // Perform the MCMC simulation
-  this->mcmc_fill(names.size(),low,high,pfa,ffa);
+  ubvector low2(low.size()), high2(high.size());
+  vector_copy(low,low2);
+  vector_copy(high,high2);
+  this->mcmc_fill(names.size(),low2,high2,pfa,ffa);
   
   if (set->apply_emu) {
     Py_Finalize();

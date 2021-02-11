@@ -609,8 +609,10 @@ make_train:
 		data/nicer/0030_st_pst.o2 \
 		data/nicer/0030_st_pst.o2 \
 		prob 0.7 table3d \
-		-model tews_threep_ligo \
-		-mcmc > make_train.scr 2>&1 &
+		-set inc_ligo 1 \
+		-model new_poly \
+		-mcmc
+#> make_train.scr 2>&1 &
 
 #		acol -read compare_0_out -get-row 0 > compare.txt
 

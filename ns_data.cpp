@@ -34,6 +34,52 @@ using namespace o2scl_hdf;
 using namespace o2scl_const;
 using namespace bamr;
 
+void ns_data::data_params(std::vector<std::string> &names,
+                          std::vector<std::string> &units,
+                          std::vector<double> &low,
+                          std::vector<double> &high,
+                          std::shared_ptr<settings> set) {
+
+  if (set->inc_ligo) {
+    names.push_back("M_chirp_det");
+    names.push_back("q");
+    names.push_back("z_cdf");
+    units.push_back("Msun");
+    units.push_back("");
+    units.push_back("");
+    low.push_back(1.1971);
+    low.push_back(0.0);
+    low.push_back(0.0);
+    high.push_back(1.1979);
+    high.push_back(1.0);
+    high.push_back(1.0);
+  }
+  
+  for(size_t i=0;i<n_sources;i++) {
+    names.push_back("mf_"+source_names[i]);
+    units.push_back("");
+    low.push_back(0.0);
+    high.push_back(1.0);
+  }
+  
+  return;
+}
+
+void ns_data::initial_point(std::shared_ptr<settings> set,
+                            std::vector<double> &init) {
+
+  if (set->inc_ligo) {
+    init.push_back(1.1975);
+    init.push_back(0.245);
+    init.push_back(0.5);
+  }
+  for(size_t i=0;i<n_sources;i++) {
+    init.push_back(0.7);
+  }
+  
+  return;
+}
+
 void ns_data::load_mc(std::ostream &scr_out, int mpi_size, int mpi_rank,
 		      std::shared_ptr<settings> set) {
       
@@ -52,6 +98,14 @@ void ns_data::load_mc(std::ostream &scr_out, int mpi_size, int mpi_rank,
       cout << "bamr: Loading " << n_sources << " data files " 
 	   << "with rank " << mpi_rank << " and size " 
 	   << mpi_size << endl;
+    }
+
+    // If requested, add the LIGO data
+    if (set->inc_ligo) {
+      hdf_file hfx;
+      hfx.open("data/ligo/ligo_tg3_v4.o2");
+      hdf_input(hfx,ligo_data_table,name);
+      hfx.close();
     }
     
     source_tables.resize(n_sources);
