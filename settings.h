@@ -109,6 +109,7 @@ namespace bamr {
     o2scl::cli::parameter_double p_mvsr_pr_inc;
     o2scl::cli::parameter_string p_data_dir;
     o2scl::cli::parameter_bool p_apply_emu;
+    o2scl::cli::parameter_bool p_inc_ligo;
     o2scl::cli::parameter_bool p_couple_threads;
     o2scl::cli::parameter_string p_emu_train;
     //@}
@@ -206,6 +207,10 @@ namespace bamr {
      */
     bool apply_emu;
 
+    /** \brief If true, include LIGO
+     */
+    bool inc_ligo;
+    
     /** \brief Filename for training data set for emulator
      */
     std::string emu_train;
@@ -404,6 +409,10 @@ namespace bamr {
       p_apply_emu.b=&apply_emu;
       p_apply_emu.help="Activate emulator";
       cl.par_list.insert(std::make_pair("apply_emu",&p_apply_emu));
+
+      p_inc_ligo.b=&inc_ligo;
+      p_inc_ligo.help="Include ligo";
+      cl.par_list.insert(std::make_pair("inc_ligo",&p_inc_ligo));
 
       p_emu_train.str=&emu_train;
       p_emu_train.help="help";

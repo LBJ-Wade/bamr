@@ -190,10 +190,7 @@ int bamr_class::fill(const ubvector &pars, double weight,
       }
     }
 
-    if (model_type==((string)"qmc_threep_ligo") ||
-        model_type==((string)"tews_threep_ligo") ||
-        model_type==((string)"tews_fixp_ligo") ||
-        model_type==((string)"qmc_fixp_ligo")) {
+    if (set->inc_ligo) {
       line.push_back(dat.eos.get_constant("M_chirp"));
       line.push_back(dat.eos.get_constant("m1"));
       line.push_back(dat.eos.get_constant("m2"));
@@ -207,14 +204,6 @@ int bamr_class::fill(const ubvector &pars, double weight,
       line.push_back(dat.eos.get_constant("Lambda2"));
       line.push_back(dat.eos.get_constant("Lambdat"));
       line.push_back(dat.eos.get_constant("del_Lambdat"));    
-      line.push_back(dat.eos.get_constant("Lambda_rat"));
-      line.push_back(dat.eos.get_constant("q6"));
-      line.push_back(dat.eos.get_constant("Lambda_s"));
-      line.push_back(dat.eos.get_constant("Lambda_a"));
-      line.push_back(dat.eos.get_constant("Lambda_a_YY"));
-      line.push_back(dat.eos.get_constant("C1"));
-      line.push_back(dat.eos.get_constant("C2"));
-      line.push_back(dat.eos.get_constant("tews"));
       line.push_back(dat.eos.get_constant("ligo_prob"));
       line.push_back(dat.eos.get_constant("eta"));
     }
@@ -288,15 +277,15 @@ int bamr_class::compute_point(const ubvector &pars, std::ofstream &scr_out,
 
   } else {
 
+    // Reference to model object for convenience
+    model &m=*this->mod;
+
     // Compute the M vs R curve and return a non-zero value if it failed
-    mod->compute_star(pars,scr_out,iret,dat);
+    m.compute_star(pars,scr_out,iret,dat);
     if (iret!=0) {
       log_wgt=0.0;
       return iret;
     }
-
-    // Reference to model object for convenience
-    model &m=*this->mod;
 
     // ----------------------------------------------------------------
     // Exit early if the mass and radius for any of the masses or radii
@@ -339,7 +328,12 @@ int bamr_class::compute_point(const ubvector &pars, std::ofstream &scr_out,
     for (size_t i=0;i<nsd->n_sources;i++) {
 
       // Determine H or He from mf parameter
-      double mf=pars[i+mod->n_eos_params];
+      double mf;
+      if (set->inc_ligo) {
+        mf=pars[i+mod->n_eos_params+3];
+      } else {
+        mf=pars[i+mod->n_eos_params];
+      }
       double d_alt=mf*1.0e8-((double)((int)(mf*1.0e8)));
       if (d_alt<2.0/3.0) {
         dat.sourcet.set("alt",i,0.0);
@@ -470,7 +464,6 @@ int bamr_class::compute_point(const ubvector &pars, std::ofstream &scr_out,
         O2SCL_ERR("Sanity check for success flag in model::compute_point.",
                   o2scl::exc_esanity);
       }
-
 	    
     } else {
 
@@ -833,75 +826,22 @@ int bamr_class::compute_point(const ubvector &pars, std::ofstream &scr_out,
     }
 
     // Section for additional LIGO constraints 
-    if (iret==0 && (model_type==((string)"qmc_threep_ligo") ||
-                    model_type==((string)"tews_threep_ligo") ||
-                    model_type==((string)"tews_fixp_ligo") ||
-                    model_type==((string)"qmc_fixp_ligo"))) {
+    if (iret==0 && set->inc_ligo) {
 	    
-      double M_chirp_det=0.0, q=0.0, eta=0.0, z_cdf; 
-      double M_chirp, z, m1=0.0, m2=0.0, delta_m=0.0;
-	    
-      if (model_type==((string)"qmc_threep_ligo")) {
-        M_chirp_det=pars[9];
-        q=pars[10];
-        z_cdf=pars[11];
-        prob_dens_gaussian pdg(0.0099,0.0009);
-        z=pdg.invert_cdf(z_cdf);
-        //cout << " inverse z : " << z << endl;
-        M_chirp=M_chirp_det/(1.0+z);
-        dat.eos.add_constant("M_chirp",M_chirp);
-	      
-        m1=M_chirp*pow(1.0+q,0.2)/pow(q,0.6);
-        m2=M_chirp*pow(q,0.4)*pow(1.0+q,0.2);
-      }
-	    
-      if (model_type!=((string)"qmc_threep_ligo") ||
-          model_type!=((string)"tews_threep_ligo") ||
-          model_type!=((string)"tews_fixp_ligo")) {
-	      
-        M_chirp_det=pars[8];
-        q=pars[9];
-        z_cdf=pars[10];
-        prob_dens_gaussian pdg(0.0099,0.0009);
-        z=pdg.invert_cdf(z_cdf);
-        //cout << " inverse z : " << z << endl;
-        M_chirp=M_chirp_det/(1.0+z);
-        dat.eos.add_constant("M_chirp",M_chirp);
-	      
-        m1=M_chirp*pow(1.0+q,0.2)/pow(q,0.6);
-        m2=M_chirp*pow(q,0.4)*pow(1.0+q,0.2);
-	      
-      }
-
-      if (model_type==((string)"tews_fixp_ligo") ||
-          model_type==((string)"tews_threep_ligo")) {
-
-        if (model_type==((string)"tews_fixp_ligo")) {
-          M_chirp_det=pars[8];
-          q=pars[9];
-          z_cdf=pars[10];
-        } else {
-          M_chirp_det=pars[9];
-          q=pars[10];
-          z_cdf=pars[11];
-        }
-	        
-        prob_dens_gaussian pdg(0.0099,0.0009);
-        z=pdg.invert_cdf(z_cdf);
-        M_chirp=M_chirp_det/(1.0+z);
-        dat.eos.add_constant("M_chirp",M_chirp);  
-	
-        m1=M_chirp*pow(1.0+q,0.2)/pow(q,0.6);
-        m2=M_chirp*pow(q,0.4)*pow(1.0+q,0.2);
-        
-        eta=(m1*m2)/((m1+m2)*(m1+m2));
-        delta_m=(m1-m2)/(m1+m2);
-        dat.eos.add_constant("eta",eta);
-        dat.eos.add_constant("delta_m",delta_m);
-
-      }
+      double M_chirp_det=0.0, q=0.0, z_cdf; 
+      double M_chirp, z, m1=0.0, m2=0.0;
+      M_chirp_det=pars[m.n_eos_params];
+      q=pars[m.n_eos_params+1];
+      z_cdf=pars[m.n_eos_params+2];
+      prob_dens_gaussian pdg(0.0099,0.0009);
+      z=pdg.invert_cdf(z_cdf);
+      M_chirp=M_chirp_det/(1.0+z);
+      dat.eos.add_constant("M_chirp",M_chirp);
+      m1=M_chirp*pow(1.0+q,0.2)/pow(q,0.6);
+      m2=M_chirp*pow(q,0.4)*pow(1.0+q,0.2);
 
       double Mmax=dat.mvsr.max("gm");
+      
       if (m1>Mmax || m2>Mmax || m1<m2) {
         log_wgt=0.0;
         iret=1;
@@ -942,7 +882,6 @@ int bamr_class::compute_point(const ubvector &pars, std::ofstream &scr_out,
 
         double Lambda1=exp(b0+b1*li+b2*li2+b3*li3+b4*li4);
 
-	    
         li=log(I_bar2);
         li2=li*li;
         li3=li*li2;
@@ -957,86 +896,20 @@ int bamr_class::compute_point(const ubvector &pars, std::ofstream &scr_out,
                                   (m2+12.0*m1)*pow(m2,4.0)*Lambda2)/
           pow(m1+m2,5.0);
         dat.eos.add_constant("Lambdat",Lambdat);
-	      
-        // Calculate delta Lambda tilde, the ratio of Lambdas, and q^6
-	      
-        //if ( model_type!=((string)"tews_threep_ligo")){
-        //eta=(m1*m2)/((m1+m2)*(m1+m2));
-        //cout << "eta : "<< eta << endl;
-        //}
-	      
+
+        double eta=(m1*m2)/((m1+m2)*(m1+m2));
+        dat.eos.add_constant("eta",eta);
+        
         double eta2=eta*eta, eta3=eta2*eta;
         double del_Lambdat=0.5*
           ((sqrt(1.0-4.0*eta)*(1.0-(13272.0/1319.0)*eta+
                                (8944.0/1319.0)*eta2)*(Lambda1+Lambda2))+
            ((1.0-(15910.0/1319.0)*eta+(32850.0/1319.0)*eta2+
              (3380.0/1319.0)*eta3)*(Lambda1-Lambda2)));
-
         dat.eos.add_constant("del_Lambdat",del_Lambdat);
-        dat.eos.add_constant("Lambda_rat",Lambda1/Lambda2);
-        dat.eos.add_constant("q6",pow(q,6.0));
-
-        // Compute the YY correlation 
-        {
-          double n=0.743;
-          double alpha=-1.0;
-          double a=0.0755;
-          double b11=-2.235;
-          double b12=0.8474;
-          double b21=10.45;
-          double b22=-3.251;
-          double b31=-15.70;
-          double b32=13.61;
-          double c11=-2.048;
-          double c12=0.5976;
-          double c21=7.941;
-          double c22=0.5658;
-          double c31=-7.36;
-          double c32=-1.32;
-          double expo=10.0/(3.0-n);
-          double Fq=(1.0-pow(q,expo))/(1.0+pow(q,expo));
-          double Lambda_s=(Lambda1+Lambda2)/2.0;
-          double Lambda_a=(Lambda2-Lambda1)/2.0;
-          double x=1.0/Lambda_s;
-          double sum1=b11*q*pow(x,0.2)+b12*q*q*pow(x,0.2)+
-            b21*q*pow(x,0.4)+b22*q*q*pow(x,0.4)+
-            b31*q*pow(x,0.6)+b32*q*q*pow(x,0.6);
-          double sum2=c11*q*pow(x,0.2)+c12*q*q*pow(x,0.2)+
-            c21*q*pow(x,0.4)+c22*q*q*pow(x,0.4)+
-            c31*q*pow(x,0.6)+c32*q*q*pow(x,0.6);
-          double Lambda_a_YY=Fq*pow(x,alpha)*(a+sum1)/(a+sum2);
-          dat.eos.add_constant("Lambda_s",Lambda_s);
-          dat.eos.add_constant("Lambda_a",Lambda_a);
-          dat.eos.add_constant("Lambda_a_YY",Lambda_a_YY);
-        }
-
-        // Compute compactness using Eq. 4 in Maselli et al. (2013)
-        {
-          double c0=3.71e-1;
-          double c1=-3.91e-2;
-          double c2=1.056e-3;
-          double C1=c0+c1*log(Lambda1)+c2*log(Lambda1)*log(Lambda1);
-          double C2=c0+c1*log(Lambda2)+c2*log(Lambda2)*log(Lambda2);
-          dat.eos.add_constant("C1",C1);
-          dat.eos.add_constant("C2",C2);
-        }
-	    
-        if (!std::isfinite(Lambda1) || !std::isfinite(Lambda2)) {
-          cout << iret << endl;
-          cout << "M_chirp, q: " << M_chirp << " " << q << endl;
-          cout << "Mmax: " << dat.mvsr.max("gm") << endl;
-          cout << "Radii: " << R1 << " " << R2 << endl;
-          cout << "Masses: " << m1 << " " << m2 << endl;
-          cout << "mom's of I: " << I1 << " " << I2 << endl;
-          cout << "Ibar: " << I_bar1 << " " << I_bar2 << endl;
-          cout << "Lambdabar: " << Lambda1 << " " << Lambda2 << endl;
-          cout << "Problem." << endl;
-          exit(-1);
-        }
-
-        // Add the LIGO log-likelihood from the RIT data
+        
+        // Add the LIGO log-likelihood
         double prob_data=-800.0;
-        //cout << "tensor grid tg3 : " << ligo_data_tg3 << endl;
 
         // Check the ligo_data_table for new or old data
         if (true) {
@@ -1046,19 +919,19 @@ int bamr_class::compute_point(const ubvector &pars, std::ofstream &scr_out,
           lin_v[1]=q;
           lin_v[2]=Lambdat;
 
-          double prob=ligo_data_table.interp_linear(lin_v);
+          double prob=nsd->ligo_data_table.interp_linear(lin_v);
           // If the point is outside of the range specified
           // in the data file, give it a very small probability
           for(size_t jj=0;jj<3;jj++) {
-            if (lin_v[jj]<ligo_data_table.get_grid(jj,0) ||
-                lin_v[jj]>ligo_data_table.get_grid
-                (jj,ligo_data_table.get_size(jj)-1)) {
+            if (lin_v[jj]<nsd->ligo_data_table.get_grid(jj,0) ||
+                lin_v[jj]>nsd->ligo_data_table.get_grid
+                (jj,nsd->ligo_data_table.get_size(jj)-1)) {
               scr_out << "LIGO quantity " << jj
-                      << " out of range." << endl;
-              size_t n_ligo=ligo_data_table.get_size(jj);
+                      << " out of range: " << endl;
+              size_t n_ligo=nsd->ligo_data_table.get_size(jj);
               scr_out << lin_v[jj] << " "
-                      << ligo_data_table.get_grid(jj,0) << " "
-                      << ligo_data_table.get_grid(jj,n_ligo-1) 
+                      << nsd->ligo_data_table.get_grid(jj,0) << " "
+                      << nsd->ligo_data_table.get_grid(jj,n_ligo-1) 
                       << endl;
               prob=-800.0;
             }
@@ -1286,443 +1159,3 @@ int bamr_class::compute_point(const ubvector &pars, std::ofstream &scr_out,
   return iret;
 }
 
-void create_pointers(char *model_name, void *&bcp2, void *&mdp2,
-		     void *&nsd2, void *&setp2, char *data_dir,
-		     int verbose) {
-
-  cout.setf(ios::scientific);
-
-  bamr::bamr_class *bcp=new bamr::bamr_class;
-  bcp2=(void *)bcp;
-  if (verbose>1) cout << "Creating settings object." << endl;
-  bcp->set=std::make_shared<settings>();
-  setp2=(void *)&(*(bcp->set));
-  if (verbose>1) cout << "Creating ns_data object." << endl;
-  bcp->nsd=std::make_shared<ns_data>();
-  nsd2=(void *)&(*(bcp->nsd));
-
-  cout << "Using data_dir = " << data_dir << endl;
-  bcp->set->data_dir=((string)data_dir);
-
-  std::string model_name_str=model_name;
-  if (verbose>1) cout << "Creating model " << model_name_str << endl;
-  if (model_name==((string)"twop")) {
-    std::shared_ptr<model> mnew(new two_polytropes(bcp->set,bcp->nsd));
-    bcp->mod=mnew;
-  } else if (model_name==((string)"tews_threep_ligo")) {
-    std::shared_ptr<model> mnew(new tews_threep_ligo(bcp->set,bcp->nsd));
-    bcp->mod=mnew;
-  } else if (model_name==((string)"tews_fixp_ligo")) {
-    std::shared_ptr<model> mnew(new tews_fixp_ligo(bcp->set,bcp->nsd));
-    bcp->mod=mnew;
-  } else {
-    cout << "Do not know model." << endl;
-    exit(-1);
-  }
-    
-  bcp->model_type=((std::string)model_name);
-  if (verbose>1) cout << "Creating model_data object." << endl;
-  bamr::model_data *mdp=new bamr::model_data;
-  mdp2=(void *)mdp;
-
-  return;
-}
-
-void set_parameter_string(void *bcp2, void *setp2, char *param_name,
-			  char *val) {
-  bamr::bamr_class *bcp=(bamr::bamr_class *)bcp2;
-  settings *setp=(settings *)setp2;
-  std::cout << "Setting: " << param_name << " to " << val << std::endl;
-  if ((string)param_name==(string)"data_dir") {
-    setp->data_dir=(string)val;
-  } else {
-    cout << "Don't know parameter " << param_name << endl;
-  }
-  return;
-}
-
-void set_parameter(void *bcp2, void *setp2, char *param_name, double val) {
-  bamr::bamr_class *bcp=(bamr::bamr_class *)bcp2;
-  settings *setp=(settings *)setp2;
-  if ((string)param_name==(string)"addl_quants") {
-    if (val>0.5) {
-      setp->addl_quants=true;
-      cout << "Setting addl_quants to true." << endl;
-    } else {
-      setp->addl_quants=false;
-      cout << "Setting addl_quants to false." << endl;
-    }
-  } else if ((string)param_name==(string)"inc_baryon_mass") {
-    if (val>0.5) {
-      setp->inc_baryon_mass=true;
-      cout << "Setting inc_baryon_mass to true." << endl;
-    } else {
-      setp->inc_baryon_mass=false;
-      cout << "Setting inc_baryon_mass to false." << endl;
-    }
-  } else if ((string)param_name==(string)"norm_max") {
-    if (val>0.5) {
-      setp->norm_max=true;
-      cout << "Setting norm_max to true." << endl;
-    } else {
-      setp->norm_max=false;
-      cout << "Setting norm_max to false." << endl;
-    }
-  } else if ((string)param_name==(string)"crust_from_L") {
-    if (val>0.5) {
-      setp->crust_from_L=true;
-      cout << "Setting crust_from_L to true." << endl;
-    } else {
-      setp->crust_from_L=false;
-      cout << "Setting crust_from_L to false." << endl;
-    }
-  } else if ((string)param_name==(string)"compute_cthick") {
-    if (val>0.5) {
-      setp->compute_cthick=true;
-      cout << "Setting compute_cthick to true." << endl;
-    } else {
-      setp->compute_cthick=false;
-      cout << "Setting compute_cthick to false." << endl;
-    }
-  } else if ((string)param_name==(string)"apply_intsc") {
-    if (val>0.5) {
-      setp->apply_intsc=true;
-      cout << "Setting apply_intsc to true." << endl;
-    } else {
-      setp->apply_intsc=false;
-      cout << "Setting apply_intsc to false." << endl;
-    }
-  } else if ((string)param_name==(string)"cached_intsc") {
-    if (val>0.5) {
-      setp->cached_intsc=true;
-      cout << "Setting cached_intsc to true." << endl;
-    } else {
-      setp->cached_intsc=false;
-      cout << "Setting cached_intsc to false." << endl;
-    }
-  } else if ((string)param_name==(string)"verbose") {
-    setp->verbose=((int)val);
-    cout << "Setting verbose to " << setp->verbose << endl;
-  } else {
-    cout << "Don't know parameter " << param_name << endl;
-  }
-  return;
-}
-
-int init(void *bcp2, void *mdp2, void *nsd2, void *setp2,
-	 int *np, int *&name_counts, char *&names,
-	 int *&unit_counts, char *&units,
-	 double *&low, double *&high) {
-
-  bamr::bamr_class *bcp=(bamr::bamr_class *)bcp2;
-  settings *setp=(settings *)setp2;
-  bamr::model_data *mdp=(bamr::model_data *)mdp2;
-  ns_data *nsd=(ns_data *)nsd2;
-
-  // ----------------------------------------------------------------
-  // Check that the settings are correct
-  
-  if (setp->inc_baryon_mass && !setp->baryon_density) {
-    std::cout << "Cannot use inc_baryon_mass=true with "
-	      << "baryon_density=false." << endl;
-    return exc_efailed;
-  }
-  if (setp->compute_cthick && (!setp->baryon_density || !setp->use_crust)) {
-    std::cout << "Cannot use compute_cthick=true with "
-	      << "baryon_density=false or use_crust=false." << endl;
-    return exc_efailed;
-  }
-  if (setp->crust_from_L && (!bcp->mod->has_esym || !setp->use_crust ||
-			     !setp->baryon_density)) {
-    std::cout << "crust_from_L: " << setp->crust_from_L << std::endl;
-    std::cout << "has_esym: " << bcp->mod->has_esym << std::endl;
-    std::cout << "use_crust: " << setp->use_crust << std::endl;
-    std::cout << "baryon_density: " << setp->baryon_density << std::endl;
-    std::cout << "Cannot use crust_from_L=true with a model which does not "
-	      << "provide S and L\nor with use_crust=false or with "
-	      << "baryon_density=false." << endl;
-    return exc_efailed;
-  }
-  if (setp->addl_quants && !setp->inc_baryon_mass) {
-    std::cout << "Cannot do additional quantities without including "
-	      << "baryon mass." << endl;
-    return exc_efailed;
-  }
-
-  // ----------------------------------------------------------------
-  // Make grids
-
-  for(size_t i=0;i<1;i++) {
-    bcp->mod->nb_grid=uniform_grid_end<double>
-      (setp->nb_low,setp->nb_high,setp->grid_size-1);
-    bcp->mod->e_grid=uniform_grid_end<double>
-      (setp->e_low,setp->e_high,setp->grid_size-1);
-    bcp->mod->m_grid=uniform_grid_end<double>
-      (setp->m_low,setp->m_high,setp->grid_size-1);
-  }
-
-  // ----------------------------------------------------------------
-  // Load data
-
-  ofstream fout;
-  nsd->load_mc(std::cout,0,1,bcp->set);
-
-  // ----------------------------------------------------------------
-  // Get parameter information and store in the py_param_info
-  // object
-
-  // verbose isn't defined here yet
-  //if (verbose>1) cout << "Calling get_param_info()." << endl;
-
-  ubvector low2, high2;
-  bcp->mod->get_param_info(bcp->ppi.names,bcp->ppi.units,low2,high2);
-
-  // Process ppi object
-  bcp->ppi.np=low2.size();
-  int npar=low2.size();
-  bcp->ppi.low.resize(npar);
-  bcp->ppi.high.resize(npar);
-  o2scl::vector_copy(low2,bcp->ppi.low);
-  o2scl::vector_copy(high2,bcp->ppi.high);
-
-  // ----------------------------------------------------------------
-  // Set n_threads
-  
-  bcp->n_threads=1;
-
-  // ----------------------------------------------------------------
-  
-  // ----------------------------------------------------------------
-  // If necessary, set up the intrinsic scattering parameters FFT
-  // filters and/or read the FFT cache
-
-  if (setp->apply_intsc) {
-    for(int i=0;i<bcp->n_threads;i++) {
-      bcp->setup_filters();
-    }
-    bcp->ppi.np+=nsd->n_sources;
-    for(size_t i=0;i<nsd->n_sources;i++) {
-      bcp->ppi.names.push_back(((string)"log10_is_")+nsd->source_names[i]);
-      bcp->ppi.units.push_back("");
-      bcp->ppi.low.push_back(-2.0);
-      bcp->ppi.high.push_back(2.0);
-    }
-  }
-  
-  if (setp->cached_intsc) {
-    hdf_file hfx;
-    for(size_t ii=0;ii<nsd->n_sources;ii++) {
-      string fname=setp->data_dir+"/cache/tg_"+o2scl::szttos(ii)+"_0";
-      hfx.open(fname);
-      hdf_input(hfx,bcp->fft_data[ii*2],"tg");
-      hfx.close();
-      fname=setp->data_dir+"/cache/tg_"+o2scl::szttos(ii)+"_1";
-      hfx.open(fname);
-      hdf_input(hfx,bcp->fft_data[ii*2+1],"tg");
-      hfx.close();
-    }
-  }
-
-  // -----------------------------------------------------------
-  // Handle additional model-specific inits
-  
-  if (bcp->model_type==((string)"qmc_threep_ligo") ||
-      bcp->model_type==((string)"tews_threep_ligo") ||
-      bcp->model_type==((string)"tews_fixp_ligo") ||
-      bcp->model_type==((string)"qmc_fixp_ligo")) {
-    hdf_file hfx;
-    string fname=setp->data_dir+"/ligo/gw170817_kde.o2";
-    hfx.open(fname);
-    std::string name;
-    hdf_input(hfx,bcp->ligo_data_table,name);
-    hfx.close();
-  }
-
-  // -----------------------------------------------------------
-  // Reparse the names and units from py_param_info into the
-  // name_counts, name_c, unit_counts, unit_c objects
-
-  npar=bcp->ppi.np;
-  bcp->ppi.name_counts.resize(npar);
-  bcp->ppi.unit_counts.resize(npar);
-
-  int sum, ix;
-  
-  sum=0;
-  for(int i=0;i<npar;i++) {
-    size_t nn=bcp->ppi.names[i].length();
-    bcp->ppi.name_counts[i]=nn;
-    sum+=nn;
-  }
-  bcp->ppi.name_c.resize(sum);
-  ix=0;
-  for(int i=0;i<npar;i++) {
-    size_t nn=bcp->ppi.names[i].length();
-    for(size_t j=0;j<nn;j++) {
-      bcp->ppi.name_c[ix]=bcp->ppi.names[i][j];
-      ix++;
-    }
-  }
-  
-  sum=0;
-  for(int i=0;i<npar;i++) {
-    size_t nn=bcp->ppi.units[i].length();
-    bcp->ppi.unit_counts[i]=nn;
-    sum+=nn;
-  }
-  bcp->ppi.unit_c.resize(sum);
-  ix=0;
-  for(int i=0;i<npar;i++) {
-    size_t nn=bcp->ppi.units[i].length();
-    for(size_t j=0;j<nn;j++) {
-      bcp->ppi.unit_c[ix]=bcp->ppi.units[i][j];
-      ix++;
-    }
-  }
-  
-  *np=bcp->ppi.np;
-  name_counts=&(bcp->ppi.name_counts[0]);
-  names=&(bcp->ppi.name_c[0]);
-  unit_counts=&(bcp->ppi.unit_counts[0]);
-  units=&(bcp->ppi.unit_c[0]);
-  low=&(bcp->ppi.low[0]);
-  high=&(bcp->ppi.high[0]);
-  
-  return 0;
-}
-
-int compute_point(void *bcp2, void *mdp2, int nv, double *vals,
-		  double *log_wgt) {
-
-  bamr::bamr_class *bcp=(bamr::bamr_class *)bcp2;
-  bamr::model_data *mdp=(bamr::model_data *)mdp2;
-
-  ofstream fout;
-  ubvector point(nv);
-  for(int j=0;j<nv;j++) {
-    point[j]=vals[j];
-  }
-  int ret=bcp->compute_point(point,fout,*log_wgt,*mdp);
-
-  return ret;
-}
- 
-int get_mvsr_column(void *mdp2, char *col_name, int &n, double *&ptr) {
-  
-  bamr::model_data *mdp=(bamr::model_data *)mdp2;
-  n=mdp->mvsr.get_nlines();
-  std::string stmp=col_name;
-  if (mdp->mvsr.is_column(stmp)==false) {
-    return 2;
-  }
-  const std::vector<double> &col=mdp->mvsr.get_column(stmp);
-  ptr=(double *)&col[0];
-  return 0;
-}
-
-int get_source_column(void *mdp2, char *col_name, int &n, double *&ptr) {
-  
-  bamr::model_data *mdp=(bamr::model_data *)mdp2;
-  n=mdp->sourcet.get_nlines();
-  std::string stmp=col_name;
-  if (mdp->mvsr.is_column(stmp)==false) {
-    return 2;
-  }
-  const std::vector<double> &col=mdp->sourcet.get_column(stmp);
-  ptr=(double *)&col[0];
-  return 0;
-}
-
-int get_grid_column(void *mdp2, char *col_name, int &n, double *&ptr) {
-  
-  bamr::model_data *mdp=(bamr::model_data *)mdp2;
-  n=mdp->gridt.get_nlines();
-  std::string stmp=col_name;
-  if (mdp->gridt.is_column(stmp)==false) {
-    return 2;
-  }
-  const std::vector<double> &col=mdp->gridt.get_column(stmp);
-  ptr=(double *)&col[0];
-  return 0;
-}
-
-double get_mvsr_constant(void *mdp2, char *con_name) {
-  bamr::model_data *mdp=(bamr::model_data *)mdp2;
-  std::string stmp=con_name;
-  return mdp->mvsr.get_constant(con_name);
-}
-
-double get_eos_constant(void *mdp2, char *con_name) {
-  bamr::model_data *mdp=(bamr::model_data *)mdp2;
-  std::string stmp=con_name;
-  return mdp->eos.get_constant(con_name);
-}
-
-void summarize_tables(void *mdp2) {
-  bamr::model_data *mdp = (bamr::model_data *)mdp2;
-  cout << "EOS table:" << endl;
-  mdp->eos.summary(&cout);
-  cout << endl;
-  cout << "M-R table:" << endl;
-  mdp->mvsr.summary(&cout);
-  cout << endl;
-  cout << "Grid table:" << endl;
-  mdp->gridt.summary(&cout);
-  cout << endl;
-  cout << "Source table:" << endl;
-  mdp->sourcet.summary(&cout);
-  cout << endl;
-  return;
-}
-
-int get_eos_column(void *mdp2, char *col_name, int &n, double *&ptr) {
-  bamr::model_data *mdp = (bamr::model_data *)mdp2;
-  n = mdp->eos.get_nlines();
-  std::string stmp=col_name;
-  if(mdp->eos.is_column(stmp) ==false){
-    return 2;
-  }
-  const std::vector<double> &col=mdp->eos.get_column(stmp);
-  ptr=(double *)&col[0];
-  return 0;
-}
-
-void destroy_pointers(void *bcp2, void *mdp2) {
-  bamr::bamr_class *bcp=(bamr::bamr_class *)bcp2;
-  bamr::model_data *mdp=(bamr::model_data *)mdp2;
-  delete bcp;
-  delete mdp;
-  return;
-}
-
-void add_data(void *nsd2, char *name, char *fname, char *slice,
-	      double mass_frac, char *table) {
-  
-  ns_data *nsd=(ns_data *)nsd2;
-  
-  nsd->source_names.push_back(((string)name));
-  nsd->source_fnames.push_back(((string)fname));
-  nsd->slice_names.push_back(((string)slice));
-  nsd->init_mass_fracs.push_back(mass_frac);
-  nsd->table_names.push_back(((string)table));
-  nsd->n_sources++;
-
-  return;
-}
-
-void add_data_alt(void *nsd2, char *name, char *fname,
-		  char *fname_alt, char *slice,
-		  double mass_frac, char *table) {
-  
-  ns_data *nsd=(ns_data *)nsd2;
-  
-  nsd->source_names.push_back(((string)name));
-  nsd->source_fnames.push_back(((string)fname));
-  nsd->source_fnames_alt.push_back(((string)fname_alt));
-  nsd->slice_names.push_back(((string)slice));
-  nsd->init_mass_fracs.push_back(mass_frac);
-  nsd->table_names.push_back(((string)table));
-  nsd->n_sources++;
-
-  return;
-}

@@ -84,6 +84,23 @@ namespace bamr {
      */
     size_t n_sources;
 
+    /** \brief The LIGO data
+     */
+    o2scl::tensor_grid<> ligo_data_table;
+
+    /** \brief Desc
+     */
+    void data_params(std::vector<std::string> &names,
+                     std::vector<std::string> &units,
+                     std::vector<double> &low,
+                     std::vector<double> &high,
+                     std::shared_ptr<settings> set);
+
+    /** \brief Desc
+     */
+    void initial_point(std::shared_ptr<settings> set,
+                       std::vector<double> &init);
+    
     /** \brief Add a data distribution to the list
      */
     virtual int add_data(std::vector<std::string> &sv, bool itive_com);

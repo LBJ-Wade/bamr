@@ -164,10 +164,7 @@ namespace bamr {
 
     /** \brief Specify the initial point
      */
-    virtual void initial_point(ubvector &pars) {
-      for(size_t i=0;i<nsd->n_sources;i++) {
-	pars[i+n_eos_params]=nsd->init_mass_fracs[i];
-      }
+    virtual void initial_point(std::vector<double> &pars) {
       return;
     }
 
@@ -175,13 +172,8 @@ namespace bamr {
      */
     virtual void get_param_info(std::vector<std::string> &names,
 				std::vector<std::string> &units,
-				ubvector &low, ubvector &high) {
-      for(size_t i=0;i<nsd->n_sources;i++) {
-	names.push_back("mf_"+nsd->source_names[i]);
-	units.push_back("");
-	low[i+n_eos_params]=0.0;
-	high[i+n_eos_params]=1.0;
-      }
+                                std::vector<double> &low,
+                                std::vector<double> &high) {
       return;
     }
 
@@ -301,7 +293,8 @@ namespace bamr {
      */
     virtual void get_param_info(std::vector<std::string> &names,
 				std::vector<std::string> &units,
-				ubvector &low, ubvector &high);
+                                std::vector<double> &low,
+                                std::vector<double> &high);
 
     /** \brief Compute the EOS corresponding to parameters in 
 	\c e and put output in \c tab_eos
@@ -311,7 +304,7 @@ namespace bamr {
 
     /** \brief Function to compute the initial guess
      */
-    virtual void initial_point(ubvector &e);
+    virtual void initial_point(std::vector<double> &pars);
 
   };
 
@@ -354,8 +347,9 @@ namespace bamr {
      */
     virtual void get_param_info(std::vector<std::string> &names,
 				std::vector<std::string> &units,
-				ubvector &low, ubvector &high);
-
+                                std::vector<double> &low,
+                                std::vector<double> &high);
+    
     /** \brief Compute the EOS corresponding to parameters in 
 	\c e and put output in \c tab_eos
     */
@@ -364,7 +358,7 @@ namespace bamr {
 
     /** \brief Function to compute the initial guess
      */
-    virtual void initial_point(ubvector &e);
+    virtual void initial_point(std::vector<double> &pars);
   
   };
 
@@ -421,7 +415,7 @@ namespace bamr {
      */
     virtual void get_param_info(std::vector<std::string> &names,
 				std::vector<std::string> &units,
-				ubvector &low, ubvector &high);
+				std::vector<double> &low, std::vector<double> &high);
 
     /** \brief Compute the EOS corresponding to parameters in 
 	\c e and put output in \c tab_eos
@@ -431,7 +425,7 @@ namespace bamr {
 
     /** \brief Function to compute the initial guess
      */
-    virtual void initial_point(ubvector &e);
+    virtual void initial_point(std::vector<double> &pars);
 
   };
 
@@ -518,7 +512,7 @@ namespace bamr {
      */
     virtual void get_param_info(std::vector<std::string> &names,
 				std::vector<std::string> &units,
-				ubvector &low, ubvector &high);
+				std::vector<double> &low, std::vector<double> &high);
 
     /** \brief Compute the EOS corresponding to parameters in 
 	\c e and put output in \c tab_eos
@@ -528,7 +522,7 @@ namespace bamr {
 
     /** \brief Function to compute the initial guess
      */
-    virtual void initial_point(ubvector &e);
+    virtual void initial_point(std::vector<double> &pars);
 
   };
 
@@ -588,7 +582,7 @@ namespace bamr {
      */
     virtual void get_param_info(std::vector<std::string> &names,
 				std::vector<std::string> &units,
-				ubvector &low, ubvector &high);
+				std::vector<double> &low, std::vector<double> &high);
 
     /** \brief Compute the EOS corresponding to parameters in 
 	\c e and put output in \c tab_eos
@@ -598,7 +592,7 @@ namespace bamr {
 
     /** \brief Function to compute the initial guess
      */
-    virtual void initial_point(ubvector &e);
+    virtual void initial_point(std::vector<double> &pars);
 
   };
 
@@ -686,7 +680,7 @@ namespace bamr {
      */
     virtual void get_param_info(std::vector<std::string> &names,
 				std::vector<std::string> &units,
-				ubvector &low, ubvector &high);
+				std::vector<double> &low, std::vector<double> &high);
     
     /** \brief Compute the EOS corresponding to parameters in 
         \c e and put output in \c tab_eos
@@ -696,7 +690,7 @@ namespace bamr {
 
     /** \brief Function to compute the initial guess
      */
-    virtual void initial_point(ubvector &e);
+    virtual void initial_point(std::vector<double> &pars);
   };
   
   /** \brief QMC + three polytropes created for \ref Steiner15un
@@ -771,7 +765,7 @@ namespace bamr {
      */
     virtual void get_param_info(std::vector<std::string> &names,
 				std::vector<std::string> &units,
-				ubvector &low, ubvector &high);
+				std::vector<double> &low, std::vector<double> &high);
     
     /** \brief Compute the EOS corresponding to parameters in 
 	\c e and put output in \c tab_eos
@@ -781,7 +775,7 @@ namespace bamr {
 
     /** \brief Function to compute the initial guess
      */
-    virtual void initial_point(ubvector &e);
+    virtual void initial_point(std::vector<double> &pars);
   
   };
 
@@ -862,7 +856,7 @@ namespace bamr {
      */
     virtual void get_param_info(std::vector<std::string> &names,
 				std::vector<std::string> &units,
-				ubvector &low, ubvector &high);
+				std::vector<double> &low, std::vector<double> &high);
     
     /** \brief Compute the EOS corresponding to parameters in 
 	\c e and put output in \c tab_eos
@@ -872,7 +866,7 @@ namespace bamr {
 
     /** \brief Function to compute the initial guess
      */
-    virtual void initial_point(ubvector &e);
+    virtual void initial_point(std::vector<double> &pars);
   
   };
   
@@ -908,7 +902,8 @@ namespace bamr {
      */
     virtual void get_param_info(std::vector<std::string> &names,
 				std::vector<std::string> &units,
-				ubvector &low, ubvector &high);
+				std::vector<double> &low,
+                                std::vector<double> &high);
     
     /** \brief Compute the EOS corresponding to parameters in 
 	\c e and put output in \c tab_eos
@@ -918,7 +913,7 @@ namespace bamr {
 
     /** \brief Function to compute the initial guess
      */
-    virtual void initial_point(ubvector &e);
+    virtual void initial_point(std::vector<double> &pars);
   
   };
 
@@ -981,11 +976,11 @@ namespace bamr {
      */
     virtual void get_param_info(std::vector<std::string> &names,
 				std::vector<std::string> &units,
-				ubvector &low, ubvector &high);
+				std::vector<double> &low, std::vector<double> &high);
 
     /** \brief Specify the initial point
      */
-    virtual void initial_point(ubvector &params);
+    virtual void initial_point(std::vector<double> &params);
 
     /** \brief Setup model parameters */
     virtual void setup_params(o2scl::cli &cl);
@@ -1040,11 +1035,11 @@ namespace bamr {
      */
     virtual void get_param_info(std::vector<std::string> &names,
 				std::vector<std::string> &units,
-				ubvector &low, ubvector &high);
+				std::vector<double> &low, std::vector<double> &high);
 
     /** \brief Specify the initial point
      */
-    virtual void initial_point(ubvector &params);
+    virtual void initial_point(std::vector<double> &params);
 
     /** \brief Setup model parameters */
     virtual void setup_params(o2scl::cli &cl);
@@ -1061,6 +1056,59 @@ namespace bamr {
 		     std::ofstream &scr_out, model_data &dat);
     
   };
+
+  /** \brief Desc
+   */
+  class new_poly : public qmc_threep {
+
+  public:
+
+    /** \brief Typedef for uBlas vectors
+     */
+    typedef boost::numeric::ublas::vector<double> ubvector;
+    
+    /** \brief Typedef for uBlas matrices
+     */
+    typedef boost::numeric::ublas::matrix<double> ubmatrix;
+    
+    /** \brief Probability distribution for neutron matter
+	parameters
+    */
+    o2scl::prob_dens_mdim_gaussian<ubvector> pdmg;
+
+    new_poly(std::shared_ptr<const settings> s,
+		     std::shared_ptr<const ns_data> n);
+    
+    /// Parameter for transition density
+    o2scl::cli::parameter_double p_nb_trans;
+
+    /** \brief Set parameter information
+     */
+    virtual void get_param_info(std::vector<std::string> &names,
+				std::vector<std::string> &units,
+				std::vector<double> &low,
+                                std::vector<double> &high);
+
+    /** \brief Specify the initial point
+     */
+    virtual void initial_point(std::vector<double> &params);
+
+    /** \brief Setup model parameters */
+    virtual void setup_params(o2scl::cli &cl);
+
+    /** \brief Remove model parameters */
+    virtual void remove_params(o2scl::cli &cl);
+    
+    /** \brief Copy model parameters */
+    virtual void copy_params(model &m);
+
+    /** \brief Desc
+     */
+    void compute_eos(const ubvector &params, int &ret,
+		     std::ofstream &scr_out, model_data &dat);
+    
+  };
+  
   
 }
 
