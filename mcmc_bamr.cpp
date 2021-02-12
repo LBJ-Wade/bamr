@@ -724,7 +724,7 @@ int mcmc_bamr::mcmc_func(std::vector<std::string> &sv, bool itive_com) {
 
   }
 
-  // Create the point and fill functors
+  // Create the point and fill functors for each thread
   vector<bamr::point_funct> pfa(n_threads);
   vector<bamr::fill_funct> ffa(n_threads);
   for(size_t i=0;i<n_threads;i++) {

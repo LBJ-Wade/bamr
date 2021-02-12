@@ -3706,6 +3706,13 @@ void new_poly::compute_eos(const ubvector &params, int &ret,
     double nb=nb1*pow(ed,1.0/(1.0-1.0/exp1))*
       pow(ed+pr,1.0/(1.0-exp1))/pow(ed1,1.0/(1.0-1.0/exp1))/
       pow(ed1+pr1,1.0/(1.0-exp1));
+    if (!std::isfinite(ed) ||
+        !std::isfinite(pr) ||
+        !std::isfinite(nb)) {
+      scr_out << "EOS diverged." << endl;
+      ret=ix_param_mismatch;
+      return;
+    }
     double line[3]={ed,pr,nb};
     dat.eos.line_of_data(3,line);
 
@@ -3737,6 +3744,13 @@ void new_poly::compute_eos(const ubvector &params, int &ret,
     double nb=nb2*pow(ed,1.0/(1.0-1.0/exp2))*
       pow(ed+pr,1.0/(1.0-exp2))/pow(ed2,1.0/(1.0-1.0/exp2))/
       pow(ed2+pr2,1.0/(1.0-exp2));
+    if (!std::isfinite(ed) ||
+        !std::isfinite(pr) ||
+        !std::isfinite(nb)) {
+      scr_out << "EOS diverged." << endl;
+      ret=ix_param_mismatch;
+      return;
+    }
     double line[3]={ed,pr,nb};
     dat.eos.line_of_data(3,line);
     
@@ -3776,6 +3790,13 @@ void new_poly::compute_eos(const ubvector &params, int &ret,
       cout << ed << " " << pr << " " << nb << endl;
     }
     dat.eos.line_of_data(3,line);
+    if (!std::isfinite(ed) ||
+        !std::isfinite(pr) ||
+        !std::isfinite(nb)) {
+      scr_out << "EOS diverged." << endl;
+      ret=ix_param_mismatch;
+      return;
+    }
     
   }
 
