@@ -564,7 +564,7 @@ make_train:
 		-set norm_max 0 -set addl_quants 1 -set inc_baryon_mass 1 \
 		-set crust_from_L 0 -set compute_cthick 1 \
 		-set file_update_time 1800 -set verbose 3 \
-		-set mcmc_verbose 2 -set max_bad_steps 100000 \
+		-set mcmc_verbose 3 -set max_bad_steps 100000 \
 		-add-data-alt 6304 \
 		data/shb18/6304_H_nopl_syst_wilm.o2 \
 		data/shb18/6304_He_nopl_syst_wilm.o2 \

@@ -399,14 +399,6 @@ int mcmc_bamr::mcmc_init() {
       this->table->new_column("Lambda2");
       this->table->new_column("Lambdat");
       this->table->new_column("del_Lambdat");    
-      this->table->new_column("Lambda_rat");
-      this->table->new_column("q6");
-      this->table->new_column("Lambda_s");
-      this->table->new_column("Lambda_a");
-      this->table->new_column("Lambda_a_YY");
-      this->table->new_column("C1");
-      this->table->new_column("C2");
-      this->table->new_column("tews_prob");
       this->table->new_column("ligo_prob");
       this->table->new_column("eta");
     }
@@ -729,8 +721,10 @@ int mcmc_bamr::mcmc_func(std::vector<std::string> &sv, bool itive_com) {
     ubvector init2(init.size());
     vector_copy(init,init2);
     this->initial_points.push_back(init2);
+
   }
-  
+
+  // Create the point and fill functors
   vector<bamr::point_funct> pfa(n_threads);
   vector<bamr::fill_funct> ffa(n_threads);
   for(size_t i=0;i<n_threads;i++) {

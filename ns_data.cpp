@@ -70,7 +70,7 @@ void ns_data::initial_point(std::shared_ptr<settings> set,
 
   if (set->inc_ligo) {
     init.push_back(1.1975);
-    init.push_back(0.245);
+    init.push_back(0.6);
     init.push_back(0.5);
   }
   for(size_t i=0;i<n_sources;i++) {
@@ -103,7 +103,7 @@ void ns_data::load_mc(std::ostream &scr_out, int mpi_size, int mpi_rank,
     // If requested, add the LIGO data
     if (set->inc_ligo) {
       hdf_file hfx;
-      hfx.open("data/ligo/ligo_tg3_v4.o2");
+      hfx.open("data/ligo/gw170817_kde.o2");
       hdf_input(hfx,ligo_data_table,name);
       hfx.close();
     }

@@ -595,9 +595,15 @@ void model::compute_star(const ubvector &pars, std::ofstream &scr_out,
     
     // Compute the masses and radii for each source
     for(size_t i=0;i<nsd->n_sources;i++) {
-      dat.sourcet.set("M",i,m_max*pars[this->n_eos_params+i]);
-      dat.sourcet.set("R",i,
-		      dat.mvsr.interp("gm",dat.sourcet.get("M",i),"r"));
+      if (set->inc_ligo) {
+        dat.sourcet.set("M",i,m_max*pars[this->n_eos_params+i+3]);
+        dat.sourcet.set("R",i,
+                        dat.mvsr.interp("gm",dat.sourcet.get("M",i),"r"));
+      } else {
+        dat.sourcet.set("M",i,m_max*pars[this->n_eos_params+i+3]);
+        dat.sourcet.set("R",i,
+                        dat.mvsr.interp("gm",dat.sourcet.get("M",i),"r"));
+      }
     }
 
     // End of loop 'if (has_eos)'
@@ -675,6 +681,11 @@ void model::compute_star(const ubvector &pars, std::ofstream &scr_out,
     }
 
     dat.eos.deriv("ed","pr","cs2");
+    cout << "ed_max: " << ed_max << endl;
+    for(size_t i=0;i<dat.eos.get_nlines();i++) {
+      cout << i << " " << dat.eos.get("ed",i) << " "
+           << dat.eos.get("pr",i) << " " << dat.eos.get("cs2",i) << endl;
+    }
     
     for(size_t i=0;i<dat.eos.get_nlines();i++) {
       if (dat.eos.get("ed",i)<ed_max &&
@@ -3559,7 +3570,7 @@ void new_poly::initial_point(std::vector<double> &params) {
   params[1]=0.4894965;
   params[2]=32.0;
   params[3]=55.0;
-  params[4]=5.94;
+  params[4]=4.0;
   params[5]=1.658677;
   params[6]=1.515;
   params[7]=4.906005;
@@ -3595,7 +3606,7 @@ void new_poly::copy_params(model &m) {
 
 void new_poly::compute_eos(const ubvector &params, int &ret,
 				   std::ofstream &scr_out, model_data &dat) {
-  
+
   bool debug=false;
 
   ret=ix_success;
@@ -3705,7 +3716,9 @@ void new_poly::compute_eos(const ubvector &params, int &ret,
   double nb1=nb_last;
   
   // Add first polytrope to table
-  cout << "First polytrope: " << exp1 << endl;
+  if (debug) {
+    cout << "First polytrope: " << exp1 << endl;
+  }
   for(double ed=ed_last+delta_ed;ed<trans1;ed+=delta_ed) {
     double pr=coeff1*pow(ed,exp1);
     double nb=nb1*pow(ed,1.0/(1.0-1.0/exp1))*
@@ -3733,7 +3746,9 @@ void new_poly::compute_eos(const ubvector &params, int &ret,
   double nb2=nb_last;
   
   // Add second polytrope to table
-  cout << "Second polytrope: " << exp2 << endl;
+  if (debug) {
+    cout << "Second polytrope: " << exp2 << endl;
+  }
   delta_ed=(trans2-trans1)/20.01;
   for(double ed=trans1;ed<trans2;ed+=delta_ed) {
     double pr=coeff2*pow(ed,exp2);
@@ -3763,8 +3778,13 @@ void new_poly::compute_eos(const ubvector &params, int &ret,
 
   // Add third polytrope to table
   delta_ed=(10.0-trans2)/20.01;
-  cout << "Third polytrope: " << exp3 << endl;
-  for(double ed=trans2;ed<10.0;ed+=delta_ed) {
+  if (debug) {
+    cout << "Third polytrope: " << exp3 << endl;
+  }
+  // We compute to energy densities slightly higher than 10
+  // because the energy grid ends at 10 and it makes sure
+  // we're not extrapolating
+  for(double ed=trans2;ed<10.5;ed+=delta_ed) {
     double pr=coeff3*pow(ed,exp3);
     double nb=nb3*pow(ed,1.0/(1.0-1.0/exp3))*
       pow(ed+pr,1.0/(1.0-exp3))/pow(ed3,1.0/(1.0-1.0/exp3))/
@@ -3776,7 +3796,7 @@ void new_poly::compute_eos(const ubvector &params, int &ret,
     dat.eos.line_of_data(3,line);
     
   }
-  
+
   if (debug) exit(-1);
 
   return;
