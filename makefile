@@ -611,8 +611,7 @@ make_train:
 		prob 0.7 table3d \
 		-set inc_ligo 1 \
 		-model new_poly \
-		-mcmc
-#> make_train.scr 2>&1 &
+		-mcmc > make_train.scr 2>&1 &
 
 #		acol -read compare_0_out -get-row 0 > compare.txt
 

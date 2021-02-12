@@ -657,11 +657,6 @@ void model::compute_star(const ubvector &pars, std::ofstream &scr_out,
     }
 
     dat.eos.deriv("ed","pr","cs2");
-    cout << "ed_max: " << ed_max << endl;
-    for(size_t i=0;i<dat.eos.get_nlines();i++) {
-      cout << i << " " << dat.eos.get("ed",i) << " "
-           << dat.eos.get("pr",i) << " " << dat.eos.get("cs2",i) << endl;
-    }
     
     for(size_t i=0;i<dat.eos.get_nlines();i++) {
       if (dat.eos.get("ed",i)<ed_max &&
@@ -1951,8 +1946,6 @@ void qmc_threep::compute_eos(const ubvector &params, int &ret,
 
   ret=ix_success;
 
-  cout << "Here2." << endl;
-  
   // Hack to start with a fresh table
   dat.eos.clear();
   if (new_nb) {
