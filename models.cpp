@@ -220,18 +220,6 @@ void model::compute_star(const ubvector &pars, std::ofstream &scr_out,
                "have a column \"nb\".",o2scl::exc_einval);
   }
 
-  for(size_t j=0;j<dat.eos.get_nlines();j++) {
-    if (!std::isfinite(dat.eos.get("pr",j))) {
-      for(size_t k=0;k<dat.eos.get_nlines();k++) {
-        cout << k << " " << dat.eos.get("ed",k) << " ";
-        cout << dat.eos.get("pr",k) << " ";
-        cout << dat.eos.get("nb",k) << endl;
-      }
-      cout << "Point 2." << endl;
-      exit(-1);
-    }
-  }
-  
   // ---------------------------------------------------------------
 
   if (has_eos) {
@@ -647,18 +635,6 @@ void model::compute_star(const ubvector &pars, std::ofstream &scr_out,
     exit(0);
   }
 
-  for(size_t j=0;j<dat.eos.get_nlines();j++) {
-    if (!std::isfinite(dat.eos.get("pr",j))) {
-      for(size_t k=0;k<dat.eos.get_nlines();k++) {
-        cout << k << " " << dat.eos.get("ed",k) << " ";
-        cout << dat.eos.get("pr",k) << " ";
-        cout << dat.eos.get("nb",k) << endl;
-      }
-      cout << "point 3." << endl;
-      exit(-1);
-    }
-  }
-  
   // -----------------------------------------------------------------
   // Check causality. Note that we have to do this after the rows for
   // the unstable branch have been removed from the mass-radius table.
@@ -2982,6 +2958,18 @@ void tews_threep_ligo::compute_eos(const ubvector &params, int &ret,
 
   // Compute coefficient given index
   double coeff1=pr_last/pow(ed_last,exp1);
+  if (!std::isfinite(coeff1)) {
+    cout << "Point 0." << endl;
+    cout << pr_last << " " << nb_last << " " << ed_last << endl;
+    cout << index1 << " " << exp1 << " " << coeff1 << endl;
+    for(size_t j=0;j<dat.eos.get_nlines();j++) {
+      cout << j << " ";
+      cout << dat.eos.get("ed",j) << " ";
+      cout << dat.eos.get("pr",j) << " ";
+      cout << dat.eos.get("nb",j) << endl;
+    }
+    exit(-1);
+  }
 
   // Compute stepsize in energy density
   double delta_ed=(trans1-ed_last)/30.01;
@@ -3039,6 +3027,12 @@ void tews_threep_ligo::compute_eos(const ubvector &params, int &ret,
 
   // Compute third coefficient given index
   double coeff3=pr_last/pow(ed_last,exp3);
+  if (!std::isfinite(coeff3)) {
+    cout << "Point 1m." << endl;
+    cout << pr_last << " " << nb_last << " " << ed_last << endl;
+    cout << index3 << " " << exp3 << " " << coeff3 << endl;
+    exit(-1);
+  }
 
   double ed3=ed_last;
   double pr3=pr_last;
@@ -3060,12 +3054,9 @@ void tews_threep_ligo::compute_eos(const ubvector &params, int &ret,
   
   for(size_t j=0;j<dat.eos.get_nlines();j++) {
     if (!std::isfinite(dat.eos.get("pr",j))) {
-      for(size_t k=0;k<dat.eos.get_nlines();k++) {
-        cout << k << " " << dat.eos.get("ed",k) << " ";
-        cout << dat.eos.get("pr",k) << " ";
-        cout << dat.eos.get("nb",k) << endl;
-      }
-      exit(-1);
+      scr_out << "Non-finite pressure." << endl;
+      ret=ix_param_mismatch;
+      return;
     }
   }
   
