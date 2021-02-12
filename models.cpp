@@ -3595,15 +3595,12 @@ void new_poly::compute_eos(const ubvector &params, int &ret,
 
   ret=ix_success;
 
-  // Hack to start with a fresh table
+  // Start with a fresh table
   dat.eos.clear();
   dat.eos.line_of_names("ed pr nb");
+  // We don't need to set units because this is done in
+  // compute_star() above.
   dat.eos.set_interp_type(itp_linear);
-
-  // FIXME: why isn't this necessary?
-  //dat.eos.set_unit("ed","1/fm^4");
-  //dat.eos.set_unit("pr","1/fm^4");
-  //dat.eos.set_unit("nb","1/fm^3");
 
   // Add the QMC calculations over the suggested range, but go a
   // little bit lower in density to make sure we extend all the way
@@ -3658,10 +3655,11 @@ void new_poly::compute_eos(const ubvector &params, int &ret,
     double nb1a=pow(nb1,alpha);
     double nb1b=pow(nb1,beta);
     double ene=a*nb1a+b*nb1b;
-    double ed=nb*(ene/hc_mev_fm+o2scl_settings.get_convert_units().convert_const
-            ("kg","1/fm",o2scl_mks::mass_neutron));
+    double ed=nb*(ene/hc_mev_fm+
+                  o2scl_settings.get_convert_units().convert_const
+                  ("kg","1/fm",o2scl_mks::mass_neutron));
     double pr=nb*(a*alpha*nb1a+b*beta*nb1b)/hc_mev_fm;
-
+    
     double line[3]={ed,pr,nb};
     dat.eos.line_of_data(3,line);
     
