@@ -99,7 +99,7 @@ void model::compute_star(const ubvector &pars, std::ofstream &scr_out,
     if (ret!=ix_success) return;
 
     // Sarah's section
-    if (new_derivative) {
+    if (set->mmax_deriv==true) {
       
       // Call read_table()
       table_units<> &teos_temp=dat.eos;
@@ -112,55 +112,7 @@ void model::compute_star(const ubvector &pars, std::ofstream &scr_out,
       dat.mvsr=*(ts.get_results());
       double m_max=dat.mvsr.max("gm");
       
-      cout << "Here1x" << endl;
-      
-      if (m_max<set->min_max_mass) {
-	scr_out << "Maximum mass too small: " << m_max << " < "
-		<< set->min_max_mass << "." << std::endl;
-	ret=ix_small_max;
-	return;
-      }
-      
-      // Here: Find the central energy density of the maximum
-      // mass star, it's in dat.mvsr
-      double c_ed = 0.0;
-   
-      cout << "here2" << endl;
-
-      dat.eos.summary(&cout);
-      dat.mvsr.summary(&cout);
-      
-      cout << "here3" << endl;
-
-      size_t row=dat.mvsr.lookup("gm", m_max);
-      c_ed=dat.mvsr.get("ed",row);
-      cout << "Central energy density (in 1/fm^4): " << c_ed << endl;
-      
-      // Check the speed of sound, cs2 > one - if so reject that point
-      dat.eos.deriv("ed","pr","cs2");
-      for (size_t i=0;i<dat.eos.get_nlines();i++) {
-	if (dat.eos.get("ed",i)<c_ed) {
-          if (dat.eos.get("cs2",i)>1.0) {
-            cout << "Here4" << endl;
-            ret=ix_acausal;
-            return;
-          }
-	}
-      }	
-      cout << "Check" << endl;        
-      ubvector pars2 = pars;   
-      pars2[0]*=1.001;
-      compute_eos(pars2,ret,scr_out,dat);
-      if (ret!=ix_success) return;
-      
-      // Call read_table()
-      teos.read_table(teos_temp, "ed", "pr", "nb");
-      
-      // Second TOV solve here
-      ts.mvsr();
-      // Check the maximum mass
-      dat.mvsr=*(ts.get_results());
-      m_max=dat.mvsr.max("gm");
+      cout << "Here1" << endl;
       
       if (m_max<set->min_max_mass) {
         scr_out << "Maximum mass too small: " << m_max << " < "
@@ -168,6 +120,72 @@ void model::compute_star(const ubvector &pars, std::ofstream &scr_out,
         ret=ix_small_max;
         return;
       }
+
+      // Here: Find the central energy density of the maximum
+      // mass star, it's in dat.mvsr
+      double c_ed = 0.0;
+   
+      dat.eos.summary(&cout);
+      dat.mvsr.summary(&cout);
+      
+      size_t row=dat.mvsr.lookup("gm", m_max);
+      c_ed=dat.mvsr.get("ed",row);
+      cout << "Central energy density (in 1/fm^4): " << c_ed << endl;
+      
+      // Check the speed of sound, cs2 > one - if so reject that point
+      dat.eos.deriv("ed","pr","cs2");
+      for (size_t i=0;i<dat.eos.get_nlines();i++) {
+        if (dat.eos.get("ed",i) < c_ed) {
+          if (dat.eos.get("cs2",i)>1.0) {
+            cout << "Here4" << endl;
+            ret=ix_acausal;
+            return;
+          }
+        }
+      } 
+              
+      ubvector pars2=pars;   
+
+      if (this->n_eos_params==12) {
+        pars2[8]*=1.001;
+      }
+      if (this->n_eos_params==11) {
+        pars2[7]*=1.001; 
+      }
+
+      compute_eos(pars2,ret,scr_out,dat);
+      if (ret!=ix_success) return;
+
+      // Call read_table()
+      teos.read_table(teos_temp, "ed", "pr", "nb");
+      
+      // Second TOV solve here
+      ts.mvsr();
+      // Check the maximum mass
+      dat.mvsr=*(ts.get_results());
+      double m_max2=dat.mvsr.max("gm");
+      
+      if (m_max<set->min_max_mass) {
+        scr_out << "Maximum mass too small: " << m_max << " < "
+                << set->min_max_mass << "." << std::endl;
+        ret=ix_small_max;
+        return;
+      }
+      double dxdy;
+      if (this->n_eos_params==12) {
+        //if(model_type ==((string) "tews_threep_ligo")){
+        dxdy = (pars2[8] - pars[8])/(m_max2 - m_max);
+        cout << pars2[8] << " " <<  pars[8] << " " 
+             << m_max2 << " " <<  m_max << endl;
+      }
+      if (this->n_eos_params==11) {
+        //if(model_type = ((string) "tews_fixp_ligo")){
+        dxdy = (pars2[7] - pars[7])/(m_max2 - m_max);
+        cout << pars2[7] << " " <<  pars[7] << " " 
+             << m_max2 << " " <<  m_max << endl;
+      }
+      cout << "Here dxdy: " << dxdy << endl;
+
       // Check the speed of sound
       row=dat.mvsr.lookup("gm", m_max);
       c_ed=dat.mvsr.get("ed",row);
@@ -184,7 +202,10 @@ void model::compute_star(const ubvector &pars, std::ofstream &scr_out,
         }
       }
 
-
+      //cout << dat.eos.deriv << exit(-1);
+      
+      dat.sourcet.add_constant("mmax_deriv",dxdy);
+      
       // End of Sarah's section
     }
     

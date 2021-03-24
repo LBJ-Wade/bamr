@@ -152,7 +152,7 @@ int bamr_class::fill(const ubvector &pars, double weight,
         }
       }
     }
-    
+
     if (set->baryon_density) {
       line.push_back(dat.mvsr.get_constant("gm_nb1"));
       line.push_back(dat.mvsr.get_constant("r_nb1"));
@@ -164,6 +164,10 @@ int bamr_class::fill(const ubvector &pars, double weight,
       line.push_back(dat.mvsr.get_constant("r_nb4"));
       line.push_back(dat.mvsr.get_constant("gm_nb5"));
       line.push_back(dat.mvsr.get_constant("r_nb5"));
+    }
+
+    if (set->mmax_deriv) {
+      line.push_back(dat.mvsr.get_constant("mmax_deriv"));
     }
     
     if (set->compute_cthick) {

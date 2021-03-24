@@ -345,6 +345,14 @@ int mcmc_bamr::mcmc_init() {
         this->table->new_column("r_nb5");
         this->table->set_unit("r_nb5","km");
       }
+      if (set->mmax_deriv) {
+        this->table->new_column("mmax_deriv");
+        if (model_type==((string)"tews_threep_ligo")) {
+          this->table->set_unit("mmax_deriv","Msun");
+        } else if (model_type==((string)"tews_fixp_ligo")) {
+          this->table->set_unit("mmax_deriv","Msun*fm^4");
+        }
+      }
       if (set->compute_cthick) {
         this->table->new_column("nt");
         this->table->set_unit("nt","1/fm^3");

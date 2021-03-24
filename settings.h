@@ -99,6 +99,7 @@ namespace bamr {
     o2scl::cli::parameter_bool p_crust_from_L;
     o2scl::cli::parameter_bool p_mpi_load_debug;
     o2scl::cli::parameter_bool p_apply_intsc;
+    o2scl::cli::parameter_bool p_mmax_deriv;
     o2scl::cli::parameter_bool p_cached_intsc;
     o2scl::cli::parameter_double p_nb_low;
     o2scl::cli::parameter_double p_nb_high;
@@ -242,6 +243,8 @@ namespace bamr {
     /** \brief Directory from which neutron star data is to be obtained
      */
     std::string data_dir;
+
+    bool mmax_deriv;
     
     /** \brief Add parameters to the \ref o2scl::cli object
      */
@@ -417,6 +420,10 @@ namespace bamr {
       p_emu_train.str=&emu_train;
       p_emu_train.help="help";
       cl.par_list.insert(std::make_pair("emu_train",&p_emu_train));
+      
+      p_mmax_deriv.b=&mmax_deriv;
+      p_mmax_deriv.help="help";
+      cl.par_list.insert(std::make_pair("mmax_deriv",&p_mmax_deriv));
       
       return;
     }
